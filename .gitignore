@@ -1,0 +1,9 @@
+/dist
+/data
+/*api.json
+/cli-prod.sh
+/cli-dev.sh
+/node_modules
+/log.txt
+/cli.json
+/credentials.json

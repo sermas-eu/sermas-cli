@@ -1,0 +1,2 @@
+#!/bin/sh
+LOG_LEVEL=debug NODE_NO_WARNINGS=1 NODE_TLS_REJECT_UNAUTHORIZED=0 ./src/index.ts $@

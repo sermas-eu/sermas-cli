@@ -1,4 +1,6 @@
-# SERMAS CLI
+# SERMAS CLI 
+
+*** The readme is in progress. Please open an issue to report a problem or ask anything ***
 
 The SERMAS CLI is designed to interface with the API for management tasks.
 
@@ -7,11 +9,10 @@ The SERMAS CLI is designed to interface with the API for management tasks.
 ```sh
 
 # help
-sermas -h
+sermas-cli -h
 
 # login
-sermas auth login
-
+sermas-cli auth login
 
 ```
 
@@ -22,7 +23,7 @@ sermas auth login
 ``` 
 # in ~/.bashrc
 
-alias sermas='cd <sermas.xr path>/cli && ./cli-local.sh'
+alias sermas-cli='cd <sermas-cli path>/cli && ./cli-local.sh'
 _sermas_completion()
 {
     local cur=${COMP_WORDS[COMP_CWORD]}

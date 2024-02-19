@@ -1,8 +1,12 @@
 {
-  "name": "sermas-cli",
+  "name": "@sermas/cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sermas-organization/sermas-cli.git"
+  },
   "version": "1.0.0",
   "type": "commonjs",
-  "description": "",
+  "description": "SERMAS CLI",
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf ./dist",

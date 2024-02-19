@@ -1,6 +1,6 @@
 # SERMAS CLI 
 
-*** The readme is in progress. Please open an issue to report a problem or ask anything ***
+**The readme is in progress. Please open an issue to report a problem or ask anything**
 
 The SERMAS CLI is designed to interface with the API for management tasks.
 
@@ -32,3 +32,7 @@ _sermas_completion()
 }
 complete -F _sermas_completion sermas
 ``` 
+
+## License
+
+Apache-2.0

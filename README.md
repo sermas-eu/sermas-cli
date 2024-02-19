@@ -1,0 +1,2 @@
+# sermas-cli
+Sermas CLI

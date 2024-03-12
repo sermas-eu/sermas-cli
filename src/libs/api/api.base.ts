@@ -16,7 +16,7 @@ import { CliConfigHandler } from './config';
 import { CliCredentialsHandler } from './credentials';
 
 export const BASE_URL =
-  process.env.BASE_URL || 'https://kiosk.local.sermas.spindoxlabs.it';
+  process.env.BASE_URL || 'http://localhost:8080';
 
 export class BaseApi {
   private readonly api: SermasApi;

@@ -97,6 +97,7 @@ export class BaseApi {
   }
 
   async getClient() {
+    await this.apiClient.init();
     return this.apiClient;
   }
 

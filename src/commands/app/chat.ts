@@ -65,13 +65,19 @@ export default {
     if (res === null)
       return fail(`Failed to save client credentials for appId=${appId}`);
 
+    const apiClient = await api.getClient();
+    await apiClient.setToken(
+      credentials.access_token,
+      credentials.refresh_token,
+    );
+
     const messages: DialogueMessageDto[] = [];
 
-    const apiClient = await api.getClient();
-
-    apiClient.events.dialogue.onDialogueMessages((ev: DialogueMessageDto) => {
-      messages.push(ev);
-    });
+    await apiClient.events.dialogue.onDialogueMessages(
+      (ev: DialogueMessageDto) => {
+        messages.push(ev);
+      },
+    );
 
     const showAnswer = () => {
       if (messages.length === 0) return;

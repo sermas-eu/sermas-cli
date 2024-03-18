@@ -253,6 +253,10 @@ export class CliProgram {
                   return;
                 }
                 logger.error(e.stack);
+              } finally {
+                logger.debug(`Closing API connection`);
+                await this.cliApi.close();
+                process.exit(0);
               }
             });
           }),

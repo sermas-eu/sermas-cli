@@ -31,6 +31,10 @@ export class BaseApi {
     });
   }
 
+  async close() {
+    this.apiClient.getBroker().disconnect();
+  }
+
   async getToken() {
     const credentials = await this.credentials.get(this.clientId);
     // logger.debug(`[${this.clientId}] Token ${credentials?.access_token}`);

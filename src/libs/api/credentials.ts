@@ -1,8 +1,8 @@
-import { CliCredentialsCollection } from '../dto/cli.dto';
-import logger from '../logger';
-import { LoginResponseDto } from '../openapi';
-import { loadFile, rmFile, saveFile } from '../util';
-import { CliConfigHandler } from './config';
+import { LoginResponseDto } from "@sermas/api-client";
+import { CliCredentialsCollection } from "../dto/cli.dto";
+import logger from "../logger";
+import { loadFile, rmFile, saveFile } from "../util";
+import { CliConfigHandler } from "./config";
 
 export class CliCredentialsHandler {
   private credentials: CliCredentialsCollection;
@@ -36,13 +36,15 @@ export class CliCredentialsHandler {
   }
 
   async save(clientId: string, data: LoginResponseDto) {
-    await this.load();
+    const saved = await this.load();
+    const exists = saved[clientId] || undefined;
+
     this.credentials[clientId] = data;
     const config = await this.config.loadConfig();
-    const exists = await this.load();
+
     if (
       config.auth?.saveLocally &&
-      exists?.access_token !== this.credentials.access_token
+      exists?.access_token !== this.credentials[clientId].access_token
     ) {
       const res = await this.saveAll(this.credentials);
       if (res === null) return null;

@@ -1,25 +1,24 @@
-import { Command, Option } from 'commander';
-import * as fs from 'fs/promises';
-import { glob } from 'glob';
-import inquirer, { Answers } from 'inquirer';
-import * as path from 'path';
-import { CliApi } from './libs/api/api.cli';
-import { CliConfigHandler } from './libs/api/config';
-import { CliCredentialsHandler } from './libs/api/credentials';
+import { Command, Option } from "commander";
+import * as fs from "fs/promises";
+import { glob } from "glob";
+import inquirer, { Answers } from "inquirer";
+import * as path from "path";
+import { CliApi } from "./libs/api/api.cli";
+import { CliConfigHandler } from "./libs/api/config";
+import { CliCredentialsHandler } from "./libs/api/credentials";
 import {
   CliCommand,
   CliCommandLeaf,
   CliCommandTree,
   CommandParams,
   PromptQuestion,
-} from './libs/dto/cli.dto';
-import logger from './libs/logger';
-import { FileFormatType, toData, toJSON } from './libs/util';
+} from "./libs/dto/cli.dto";
+import logger from "./libs/logger";
+import { FileFormatType, toData, toJSON } from "./libs/util";
 
-const credentialsFile = `./credentials.json`;
-const cliConfigFile = `./cli.json`;
-
-const CLI_NAME = `sermas`;
+const credentialsFile = path.resolve(__dirname, `../credentials.json`);
+const cliConfigFile = path.resolve(__dirname, `../cli.json`);
+const packageJson = path.resolve(__dirname, "../package.json");
 
 export class CliProgram {
   private readonly fileExt = path.extname(__filename);
@@ -35,64 +34,71 @@ export class CliProgram {
   constructor() {}
 
   async init() {
+    const pkg: { name: string; version: string } = JSON.parse(
+      (await fs.readFile(packageJson)).toString(),
+    );
+
+    const CLI_NAME = "sermas-cli";
+    const CLI_VERSION = pkg.version;
+
     const program = new Command();
     program
 
       .name(CLI_NAME)
-      .version('1.0.0-alpha')
+      .version(CLI_VERSION)
 
       // https://github.com/tj/commander.js?tab=readme-ov-file#parsing-configuration
       // each option is parsed and available by the relative command
       .enablePositionalOptions()
 
       .addOption(
-        new Option('-l, --log-level <level>', 'Set log level')
-          .default('info')
-          .env('LOG_LEVEL')
+        new Option("-l, --log-level <level>", "Set log level")
+          .default("info")
+          .env("LOG_LEVEL")
           .choices(Object.keys(logger.levels)),
       )
-      .on('option:log-level', (level: string) => {
+      .on("option:log-level", (level: string) => {
         logger.level = level;
       })
 
       .addOption(
         new Option(
-          '-j, --json',
-          'Return as JSON output. This option will disable interactive prompts.',
+          "-j, --json",
+          "Return as JSON output. This option will disable interactive prompts.",
         )
-          .env('OUTPUT_JSON')
-          .conflicts(['yaml'])
-          .implies({ output: 'json' }),
+          .env("OUTPUT_JSON")
+          .conflicts(["yaml"])
+          .implies({ output: "json" }),
       )
       .addOption(
         new Option(
-          '-y, --yaml',
-          'Return as YAML output. This option will disable interactive prompts.',
+          "-y, --yaml",
+          "Return as YAML output. This option will disable interactive prompts.",
         )
-          .env('OUTPUT_YAML')
-          .conflicts(['json'])
-          .implies({ output: 'yaml' }),
+          .env("OUTPUT_YAML")
+          .conflicts(["json"])
+          .implies({ output: "yaml" }),
       )
       .addOption(
         new Option(
-          '-o, --output [format]',
-          'Return as parsable output. This option will disable interactive prompts.',
+          "-o, --output [format]",
+          "Return as parsable output. This option will disable interactive prompts.",
         )
-          .env('OUTPUT')
-          .preset('json')
-          .choices(['json', 'yaml']),
+          .env("OUTPUT")
+          .preset("json")
+          .choices(["json", "yaml"]),
       )
-      .on('option:output', () => this.silenceLogger())
-      .on('option:yaml', () => this.silenceLogger())
-      .on('option:json', () => this.silenceLogger());
+      .on("option:output", () => this.silenceLogger())
+      .on("option:yaml", () => this.silenceLogger())
+      .on("option:json", () => this.silenceLogger());
 
-    const commandsBasePath = path.resolve(__dirname, './commands/');
+    const commandsBasePath = path.resolve(__dirname, "./commands/");
     const commandsPathsList = await glob(
-      commandsBasePath + '/**/*' + this.fileExt,
+      commandsBasePath + "/**/*" + this.fileExt,
     );
     const commandsList = commandsPathsList
-      .map((p) => p.replace(commandsBasePath + '/', ''))
-      .map((p) => p.split('/'));
+      .map((p) => p.replace(commandsBasePath + "/", ""))
+      .map((p) => p.split("/"));
 
     const tree: CliCommandLeaf = {};
     for (const cmds of commandsList) {
@@ -116,9 +122,9 @@ export class CliProgram {
       leaf: tree,
     });
 
-    program.command('completion').action(async () => {
+    program.command("completion").action(async () => {
       const completions = process.argv.slice(
-        process.argv.indexOf('completion') + 1,
+        process.argv.indexOf("completion") + 1,
       );
 
       const depth = +completions.shift() - 1;
@@ -129,7 +135,7 @@ export class CliProgram {
 
       const printOptions = (options: string[], match?: string) => {
         console.log(
-          options.filter((c) => !match || c.startsWith(match)).join('\n'),
+          options.filter((c) => !match || c.startsWith(match)).join("\n"),
         );
       };
 
@@ -187,12 +193,12 @@ export class CliProgram {
 
   async buildProgram(param: CliCommandTree, tree: Record<string, any> = {}) {
     for (const key in param.leaf) {
-      if (key === 'commands' && param.leaf.commands.length) {
+      if (key === "commands" && param.leaf.commands.length) {
         await Promise.all(
           param.leaf.commands.map(async (cmd) => {
-            const cmdName = cmd.replace(this.fileExt, '');
+            const cmdName = cmd.replace(this.fileExt, "");
 
-            if (cmdName === 'default') {
+            if (cmdName === "default") {
               return;
             }
 
@@ -236,7 +242,7 @@ export class CliProgram {
                 const output = await cliCommand.run(params);
                 if (output && formatOutput) {
                   console.log(
-                    typeof output === 'string'
+                    typeof output === "string"
                       ? output
                       : toData(formatOutput, output),
                   );
@@ -280,7 +286,7 @@ export class CliProgram {
 
   silenceLogger() {
     // this seems not to be working, need to be passed as ENV
-    process.env.NODE_NO_WARNINGS = '1';
+    process.env.NODE_NO_WARNINGS = "1";
     logger.transports.forEach((t) => {
       t.silent = true;
     });

@@ -1,7 +1,7 @@
-import { Command } from 'commander';
+import { Command } from "commander";
 
 export default {
   setup: async (command: Command) => {
-    command.description('manage applications');
+    command.description("manage applications");
   },
 };

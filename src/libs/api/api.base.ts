@@ -1,7 +1,9 @@
-import { jwtDecode } from 'jwt-decode';
-import mqtt from 'mqtt';
-import { KeycloakJwtTokenDto } from '../dto/keycloak.dto';
-import logger from '../logger';
+import { jwtDecode } from "jwt-decode";
+import { KeycloakJwtTokenDto } from "../dto/keycloak.dto";
+import logger from "../logger";
+import { CliConfigHandler } from "./config";
+import { CliCredentialsHandler } from "./credentials";
+
 import {
   AppModuleConfigDto,
   CreatePlatformAppDto,
@@ -9,17 +11,13 @@ import {
   LoginRequestDto,
   PlatformAppDto,
   PlatformAppExportFilterDto,
-  SermasApi,
-} from '../openapi';
-import { uuid } from '../util';
-import { CliConfigHandler } from './config';
-import { CliCredentialsHandler } from './credentials';
+  SermasApiClient,
+} from "@sermas/api-client";
 
-export const BASE_URL =
-  process.env.BASE_URL || 'https://kiosk.local.sermas.spindoxlabs.it';
+export const BASE_URL = process.env.BASE_URL || "http://localhost:8080";
 
 export class BaseApi {
-  private readonly api: SermasApi;
+  private readonly apiClient: SermasApiClient;
 
   constructor(
     protected readonly clientId: string,
@@ -27,9 +25,9 @@ export class BaseApi {
     protected readonly credentials: CliCredentialsHandler,
     protected readonly baseUrl = BASE_URL,
   ) {
-    this.api = new SermasApi({
-      BASE: this.baseUrl,
-      TOKEN: () => this.getToken(),
+    this.apiClient = new SermasApiClient({
+      baseURL: this.baseUrl,
+      logger,
     });
   }
 
@@ -60,9 +58,10 @@ export class BaseApi {
         }
 
         logger.debug(`Updating credentials for ${config.auth?.username}`);
-        await this.credentials.save('user', data);
+        await this.credentials.save("user", data);
 
-        return credentials?.access_token || null;
+        await this.apiClient.setToken(data);
+        return data?.access_token || null;
       }
     }
 
@@ -74,7 +73,7 @@ export class BaseApi {
     // check if token is expired
     const expired = await this.isTokenExpired(credentials?.access_token);
     if (expired) {
-      logger.debug('Token is expired');
+      logger.debug("Token is expired");
       const res = await this.refreshToken();
       if (res === null) {
         await this.credentials.remove(this.clientId);
@@ -83,6 +82,7 @@ export class BaseApi {
     }
 
     logger.debug(`Loaded token for ${this.clientId}`);
+    await this.apiClient.setToken(credentials);
     return credentials?.access_token || null;
   }
 
@@ -92,11 +92,16 @@ export class BaseApi {
     return info.exp * 1000 < Date.now();
   }
 
-  getClient() {
-    return this.api;
+  async getClient() {
+    return this.apiClient;
   }
 
-  async requestWrapper<T = any>(req: (api: SermasApi) => Promise<T>) {
+  async getBroker() {
+    const apiClient = await this.getClient();
+    return apiClient.getBroker();
+  }
+
+  async requestWrapper<T = any>(req: (client: SermasApiClient) => Promise<T>) {
     try {
       const api = await this.getClient();
       return await req(api);
@@ -105,43 +110,6 @@ export class BaseApi {
       logger.debug(`${e.stack}`);
     }
     return null;
-  }
-
-  async connectMqtt(appId: string, token?: string) {
-    if (!token) {
-      const credentials = await this.loadAppCredentials(appId);
-      if (credentials === null) {
-        logger.error(`Failed to get access token for ${appId}`);
-        return null;
-      }
-      token = credentials?.access_token;
-    }
-
-    if (!token) {
-      logger.error(`Token is missing`);
-      return null;
-    }
-
-    const tokenInfo = await this.getTokenInfo(token);
-    const mqttUrl = BASE_URL.replace('https', 'wss') + '/mqtt';
-    const client = mqtt.connect(mqttUrl, {
-      username: token,
-      password: 'sermas-cli',
-      clientId: `sermas-cli-${tokenInfo.sub}-${uuid()}`,
-      // protocolVersion: 5,
-    });
-
-    client.on('disconnect', () => {
-      logger.debug(`[${appId}] Disconnected`);
-    });
-
-    return await new Promise<mqtt.MqttClient>((resolve, reject) => {
-      client.on('error', (e) => reject(e));
-      client.on('connect', () => {
-        logger.debug(`[${appId}] Connected`);
-        resolve(client);
-      });
-    });
   }
 
   async refreshToken() {
@@ -153,11 +121,11 @@ export class BaseApi {
     if (!tokenInfo) return null;
 
     try {
-      const res = await client.authentication.refreshToken({
+      const res = await client.api.authentication.refreshToken({
         refreshToken: credentials.refresh_token,
         clientId: tokenInfo.clientId,
-        clientSecret: '',
-        appId: '',
+        clientSecret: "",
+        appId: "",
       });
 
       await this.credentials.save(this.clientId, res);
@@ -177,99 +145,100 @@ export class BaseApi {
 
   async login(data: LoginRequestDto) {
     logger.verbose(`Performing user login`);
-    return await this.requestWrapper((api: SermasApi) =>
-      api.authentication.login(data),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.authentication.login(data),
     );
   }
 
   async createApp(data: CreatePlatformAppDto) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.createApp(data),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.createApp(data),
     );
   }
 
   async listUserApps() {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.listUserApps(),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.listUserApps(),
     );
   }
 
   async loadAppCredentials(appId: string) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.getClientAccessToken({
-        clientId: 'application',
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.getClientAccessToken({
+        clientId: "application",
         appId,
       }),
     );
   }
 
   async removeApp(appId: string) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.removeApp(appId),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.removeApp(appId),
     );
   }
 
   async updateApp(app: PlatformAppDto) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.updateApp(app),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.updateApp(app),
     );
   }
 
   async importApps(apps: PlatformAppDto[], skipClients?: boolean) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.importApps(
-        skipClients === undefined ? undefined : skipClients ? 'true' : 'false',
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.importApps(
+        skipClients === undefined ? undefined : skipClients ? "true" : "false",
         apps,
       ),
     );
   }
 
   async exportApps(filter: PlatformAppExportFilterDto = {}) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.exportApps(filter),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.exportApps(filter),
     );
   }
 
   async getPlatformSettings() {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.getSettings(),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.getSettings(),
     );
   }
 
   async getPlatformUserSettings() {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.getUserSettings(),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.getUserSettings(),
     );
   }
 
   async sendChatMessage(payload: DialogueUserMessageDto) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.dialogue.chatMessage(
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.dialogue.chatMessage(
         payload.appId,
         payload.sessionId,
         payload.language,
         payload.gender,
         payload.llm,
+        payload.actor,
         payload,
       ),
     );
   }
 
   async savePlatformModule(cfg: AppModuleConfigDto) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.savePlatformModule(cfg),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.savePlatformModule(cfg),
     );
   }
 
   async removePlatformModule(moduleId: string) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.removePlatformModule(moduleId),
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.removePlatformModule(moduleId),
     );
   }
 
   async removeApps(appId: string[]) {
-    return await this.requestWrapper((api: SermasApi) =>
-      api.platform.removeApps({
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.removeApps({
         appId,
       }),
     );

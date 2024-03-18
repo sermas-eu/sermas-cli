@@ -1,13 +1,13 @@
-import { Command } from 'commander';
-import logger from '../../../libs/logger';
-import { fail, quit } from '../../../libs/util';
-import { CommandParams } from '../../../libs/dto/cli.dto';
+import { Command } from "commander";
+import logger from "../../../libs/logger";
+import { fail, quit } from "../../../libs/util";
+import { CommandParams } from "../../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Delete applications')
-      .argument('<appId...>', 'Applications ID');
+      .description("Delete applications")
+      .argument("<appId...>", "Applications ID");
   },
 
   run: async ({ args, feature, api }: CommandParams) => {
@@ -17,12 +17,12 @@ export default {
       return quit(`No applications ID provided`);
     }
 
-    logger.info(`Removing ${appId.join(', ')}`);
+    logger.info(`Removing ${appId.join(", ")}`);
     const answers = await feature.prompt([
       {
-        name: 'confirm',
-        message: 'Are you sure?',
-        type: 'confirm',
+        name: "confirm",
+        message: "Are you sure?",
+        type: "confirm",
       },
     ]);
 
@@ -30,7 +30,7 @@ export default {
 
     await api.removeApps(appId);
 
-    logger.info(`Application removed appId=[${appId.join(', ')}]`);
+    logger.info(`Application removed appId=[${appId.join(", ")}]`);
     return appId;
   },
 };

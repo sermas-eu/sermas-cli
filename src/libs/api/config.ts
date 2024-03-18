@@ -1,6 +1,6 @@
-import { CliConfig } from '../dto/cli.dto';
-import logger from '../logger';
-import { loadFile, saveFile } from '../util';
+import { CliConfig } from "../dto/cli.dto";
+import logger from "../logger";
+import { loadFile, saveFile } from "../util";
 
 export class CliConfigHandler {
   private config: CliConfig;

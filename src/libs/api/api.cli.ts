@@ -1,9 +1,9 @@
-import { CliConfig } from '../dto/cli.dto';
-import { LoginResponseDto } from '../openapi';
-import { AppApi } from './api.app';
-import { BaseApi } from './api.base';
-import { CliConfigHandler } from './config';
-import { CliCredentialsHandler } from './credentials';
+import { LoginResponseDto } from "@sermas/api-client";
+import { CliConfig } from "../dto/cli.dto";
+import { AppApi } from "./api.app";
+import { BaseApi } from "./api.base";
+import { CliConfigHandler } from "./config";
+import { CliCredentialsHandler } from "./credentials";
 
 export class CliApi extends BaseApi {
   constructor(
@@ -11,7 +11,7 @@ export class CliApi extends BaseApi {
     protected override readonly credentials: CliCredentialsHandler,
     baseUrl?: string,
   ) {
-    super('user', config, credentials, baseUrl);
+    super("user", config, credentials, baseUrl);
   }
 
   async getAppClient(appId: string): Promise<AppApi> {

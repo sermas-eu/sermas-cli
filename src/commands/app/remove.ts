@@ -1,14 +1,14 @@
-import { Command } from 'commander';
-import logger from '../../libs/logger';
-import { fail, quit } from '../../libs/util';
-import { CommandParams } from '../../libs/dto/cli.dto';
+import { Command } from "commander";
+import logger from "../../libs/logger";
+import { fail, quit } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Delete an application')
-      .option('--public', 'Save credentials locally')
-      .argument('[appId]', 'Application ID');
+      .description("Delete an application")
+      .option("--public", "Save credentials locally")
+      .argument("[appId]", "Application ID");
   },
 
   run: async ({ args, feature, api }: CommandParams) => {
@@ -24,9 +24,9 @@ export default {
       try {
         const answers = await feature.prompt([
           {
-            name: 'appId',
-            type: 'rawlist',
-            message: 'Select an application',
+            name: "appId",
+            type: "rawlist",
+            message: "Select an application",
             choices: apps.map(({ name, appId: value }) => ({
               name,
               value,
@@ -47,9 +47,9 @@ export default {
 
     const answers = await feature.prompt([
       {
-        name: 'confirm',
-        message: 'Are you sure?',
-        type: 'confirm',
+        name: "confirm",
+        message: "Are you sure?",
+        type: "confirm",
       },
     ]);
 

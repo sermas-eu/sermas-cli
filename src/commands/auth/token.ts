@@ -1,11 +1,11 @@
-import { Command } from 'commander';
-import { CommandParams } from '../../libs/dto/cli.dto';
-import logger from '../../libs/logger';
-import { fail } from '../../libs/util';
+import { Command } from "commander";
+import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
+import { fail } from "../../libs/util";
 
 export default {
   setup: async (command: Command) => {
-    command.description('retrieve a user token');
+    command.description("retrieve a user token");
   },
 
   run: async ({ api }: CommandParams) => {

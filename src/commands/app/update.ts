@@ -1,14 +1,14 @@
-import { Command } from 'commander';
-import logger from '../../libs/logger';
-import { PlatformAppDto } from '../../libs/openapi';
-import { fail, loadFile } from '../../libs/util';
-import { CommandParams } from '../../libs/dto/cli.dto';
+import { Command } from "commander";
+import logger from "../../libs/logger";
+import { PlatformAppDto } from "@sermas/api-client";
+import { fail, loadFile } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
     command
-      .argument('<path>', 'a JSON with one or more application definition')
-      .description('Update an new application');
+      .argument("<path>", "a JSON with one or more application definition")
+      .description("Update an new application");
   },
 
   run: async ({ args, api }: CommandParams) => {

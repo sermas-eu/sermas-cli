@@ -1,22 +1,22 @@
-import axios, { AxiosResponse } from 'axios';
-import { Command } from 'commander';
-import { CommandParams } from '../../../libs/dto/cli.dto';
-import logger from '../../../libs/logger';
-import { PlatformModuleConfigDto } from '../../../libs/openapi';
-import { fail, toJSON } from '../../../libs/util';
+import axios, { AxiosResponse } from "axios";
+import { Command } from "commander";
+import { CommandParams } from "../../../libs/dto/cli.dto";
+import logger from "../../../libs/logger";
+import { PlatformModuleConfigDto } from "@sermas/api-client";
+import { fail, toJSON } from "../../../libs/util";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Add or update a platform module')
-      .argument('[openapiSpec]', 'Module Open API specification URL');
+      .description("Add or update a platform module")
+      .argument("[openapiSpec]", "Module Open API specification URL");
   },
 
   run: async ({ api, feature, args }: CommandParams) => {
     const [moduleUrl] = args;
 
     const mod: PlatformModuleConfigDto = {
-      moduleId: '',
+      moduleId: "",
       supports: [],
       config: {
         url: moduleUrl,
@@ -29,9 +29,9 @@ export default {
     if (!mod.config.url) {
       const answers = await feature.prompt([
         {
-          name: 'moduleUrl',
-          message: 'Module URL',
-          type: 'input',
+          name: "moduleUrl",
+          message: "Module URL",
+          type: "input",
         },
       ]);
       mod.config.url = answers.moduleUrl;
@@ -67,12 +67,12 @@ export default {
       return fail(`Failed to load ${mod.config.url}: ${e.message}`);
     }
 
-    mod.name = spec.info?.title || '';
-    mod.description = spec.info?.description || '';
+    mod.name = spec.info?.title || "";
+    mod.description = spec.info?.description || "";
 
-    mod.moduleId = (spec.info?.title || 'module')
-      .replace(/ /gi, '-')
-      .replace(/[^a-z0-9_-]/gi, '')
+    mod.moduleId = (spec.info?.title || "module")
+      .replace(/ /gi, "-")
+      .replace(/[^a-z0-9_-]/gi, "")
       .toLowerCase();
     mod.config.resources = mod.config.resources || [];
 
@@ -95,7 +95,7 @@ export default {
           operationId: operation.operationId,
           resource: resource,
           scope: operation.operationId,
-          description: operation.title || operation.summary || '',
+          description: operation.title || operation.summary || "",
         });
       }
     }

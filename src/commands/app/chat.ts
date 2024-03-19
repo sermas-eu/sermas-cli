@@ -56,24 +56,12 @@ export default {
       );
     }
 
-    const credentials = await api.loadAppCredentials(appId);
-    if (credentials === null) {
-      return fail(`Failed to get access token for ${appId}`);
-    }
-
-    const res = await api.saveClientCredentials(appId, credentials);
-    if (res === null)
-      return fail(`Failed to save client credentials for appId=${appId}`);
-
-    const apiClient = await api.getClient();
-    await apiClient.setToken(
-      credentials.access_token,
-      credentials.refresh_token,
-    );
+    const appApi = await api.getAppClient(appId);
+    const appApiClient = appApi.getClient();
 
     const messages: DialogueMessageDto[] = [];
 
-    await apiClient.events.dialogue.onDialogueMessages(
+    await appApiClient.events.dialogue.onDialogueMessages(
       (ev: DialogueMessageDto) => {
         messages.push(ev);
       },
@@ -129,8 +117,6 @@ export default {
 
     let quit = false;
     waitInterrupt().then(() => (quit = true));
-
-    const appApi = await api.getAppClient(appId);
 
     while (!quit) {
       const answers = await feature.prompt([

@@ -96,19 +96,18 @@ export class BaseApi {
     return info.exp * 1000 < Date.now();
   }
 
-  async getClient() {
-    await this.apiClient.init();
+  getClient() {
     return this.apiClient;
   }
 
-  async getBroker() {
-    const apiClient = await this.getClient();
+  getBroker() {
+    const apiClient = this.getClient();
     return apiClient.getBroker();
   }
 
   async requestWrapper<T = any>(req: (client: SermasApiClient) => Promise<T>) {
     try {
-      const api = await this.getClient();
+      const api = this.getClient();
       return await req(api);
     } catch (e: any) {
       logger.error(`Request failed: ${e.message}`);
@@ -118,7 +117,7 @@ export class BaseApi {
   }
 
   async refreshToken() {
-    const client = await this.getClient();
+    const client = this.getClient();
     const credentials = await this.credentials.get(this.clientId);
     if (!credentials) return null;
 

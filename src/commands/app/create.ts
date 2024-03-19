@@ -1,15 +1,15 @@
-import { Command } from 'commander';
+import { Command } from "commander";
 
-import logger from '../../libs/logger';
-import { fail } from '../../libs/util';
-import { CommandParams } from '../../libs/dto/cli.dto';
+import logger from "../../libs/logger";
+import { fail } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Create a new application')
-      .option('--public', 'Expose as a public application')
-      .argument('[name]', 'Application name');
+      .description("Create a new application")
+      .option("--public", "Expose as a public application")
+      .argument("[name]", "Application name");
   },
 
   run: async ({ args, flags, feature, api }: CommandParams) => {
@@ -22,9 +22,9 @@ export default {
 
     if (!app.name) {
       questions.push({
-        name: 'name',
-        message: 'App name',
-        type: 'input',
+        name: "name",
+        message: "App name",
+        type: "input",
       });
     }
 
@@ -49,10 +49,11 @@ export default {
         backgrounds: [],
       },
       settings: {
-        avatar: '',
-        language: '',
-        background: '',
-        llm: '',
+        login: false,
+        avatar: "",
+        language: "",
+        background: "",
+        llm: "",
       },
     });
 

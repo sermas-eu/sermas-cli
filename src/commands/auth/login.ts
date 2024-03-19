@@ -1,15 +1,15 @@
-import { Command } from 'commander';
-import { CommandParams } from '../../libs/dto/cli.dto';
-import logger from '../../libs/logger';
-import { fail } from '../../libs/util';
+import { Command } from "commander";
+import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
+import { fail } from "../../libs/util";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Login and obtain user credentials')
-      .option('--saveLocally', 'Save credentials locally')
-      .argument('[username]', 'Your username')
-      .argument('[password]', 'Your password');
+      .description("Login and obtain user credentials")
+      .option("--saveLocally", "Save credentials locally")
+      .argument("[username]", "Your username")
+      .argument("[password]", "Your password");
   },
 
   run: async ({ args, flags, feature, config, api }: CommandParams) => {
@@ -25,28 +25,28 @@ export default {
 
     if (!data.username || !data.username.length) {
       questions.push({
-        name: 'username',
-        message: 'Your username',
-        type: 'input',
+        name: "username",
+        message: "Your username",
+        type: "input",
         default: config.auth?.username,
       });
     }
 
     if (!data.password || !data.password.length) {
       questions.push({
-        name: 'password',
-        message: 'Your password',
-        type: 'password',
+        name: "password",
+        message: "Your password",
+        type: "password",
         default: config.auth?.password,
       });
     }
 
     if (saveLocally === undefined) {
       questions.push({
-        name: 'saveLocally',
+        name: "saveLocally",
         message:
-          'Save your credentials locally? NOTE This will create an unecrypted local file which may expose to security risks.',
-        type: 'confirm',
+          "Save your credentials locally? NOTE This will create an unecrypted local file which may expose to security risks.",
+        type: "confirm",
       });
     }
 

@@ -1,15 +1,15 @@
-import { Command } from 'commander';
-import { MqttClient } from 'mqtt';
-import { CommandParams } from '../../libs/dto/cli.dto';
-import logger from '../../libs/logger';
-import { fail, toJSON, waitInterrupt } from '../../libs/util';
+import { MqttClient } from "@sermas/api-client";
+import { Command } from "commander";
+import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
+import { fail, toJSON, waitInterrupt } from "../../libs/util";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Subscribe to a topic')
+      .description("Subscribe to a topic")
       .argument(
-        '<topic...>',
+        "<topic...>",
         `The topic(s) to subscribe in the form 'app/<appId>/resource/scope[/more]'. Specify more topics separated by space. Wildcard are supported.`,
       );
   },
@@ -18,8 +18,8 @@ export default {
     const argTopics = args;
 
     const topics: string[] = (argTopics || []).map((topic) => {
-      const parts = (topic || '').split('/');
-      if (parts.length < 3 || parts[0] !== 'app')
+      const parts = (topic || "").split("/");
+      if (parts.length < 3 || parts[0] !== "app")
         return fail(
           `topic ${topic} must follow the pattern 'app/<appId>/resource/scope[/more]'`,
         );
@@ -34,11 +34,11 @@ export default {
     const clients: Record<string, MqttClient> = {};
 
     for (const topic of topics) {
-      const [, appId, resource, scope] = topic.split('/');
+      const [, appId, resource, scope] = topic.split("/");
 
       const subTopics = [];
       const baseTopic = `app/${appId}`;
-      if (resource === '*') {
+      if (resource === "*") {
         subTopics.push(
           ...Object.keys(res.resources)
             .map((resource) =>
@@ -48,7 +48,7 @@ export default {
             )
             .flat(),
         );
-      } else if (scope === '*') {
+      } else if (scope === "*") {
         subTopics.push(
           ...res.resources[resource].map(
             (scope) => `${baseTopic}/${resource}/${scope}`,
@@ -65,7 +65,8 @@ export default {
       if (!clients[appId]) {
         try {
           logger.debug(`Connecting to ${appId}`);
-          client = await appApi.connectMqtt(appId);
+          const broker = await appApi.getBroker();
+          client = broker.getClient();
         } catch (e) {
           return fail(`[${appId}] MQTT error: ${e.stack}`);
         }
@@ -74,9 +75,9 @@ export default {
 
         clients[appId] = client;
 
-        client.on('message', (topic, message, packet) => {
-          let data = '[binary]';
-          let properties = '';
+        client.on("message", (topic, message, packet) => {
+          let data = "[binary]";
+          let properties = "";
           if (packet.properties) {
             properties = JSON.stringify(packet.properties);
           }

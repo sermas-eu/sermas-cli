@@ -1,41 +1,40 @@
-import { Command, Option } from 'commander';
-import mqtt from 'mqtt';
-import { CommandParams } from '../../libs/dto/cli.dto';
-import { DialogueAgentMessageDto } from '../../libs/dto/dialogue.dto';
-import logger from '../../libs/logger';
-import { fail, sleep, uuid, waitInterrupt } from '../../libs/util';
+import { DialogueMessageDto } from "@sermas/api-client";
+import { Command, Option } from "commander";
+import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
+import { fail, sleep, uuid, waitInterrupt } from "../../libs/util";
 
-const languages = ['es-ES', 'pt-PT', 'it-IT', 'de-DE', 'en-GB', 'fr-FR'];
-const defaultLanguage = 'en-GB';
-const defaultLLM = 'chatgpt';
+const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
+const defaultLanguage = "en-GB";
+const defaultLLM = "chatgpt";
 
 export default {
   setup: async (command: Command) => {
     command
-      .description('Chat with an agent')
+      .description("Chat with an agent")
       .argument(
-        '[appId]',
+        "[appId]",
         `Reference to an application or the selected one will be used`,
       )
-      .argument('[sessionId]', `A session ID to reuse or a new one is created`)
+      .argument("[sessionId]", `A session ID to reuse or a new one is created`)
       .addOption(
         new Option(
-          '-l, --language [language]',
-          'Language used in the format `en-US`',
+          "-l, --language [language]",
+          "Language used in the format `en-US`",
         )
           .default(defaultLanguage)
           .choices(languages),
       )
       .addOption(
         new Option(
-          '-g, --gender [gender]',
-          'Gender of the avatar (used by TTS)',
+          "-g, --gender [gender]",
+          "Gender of the avatar (used by TTS)",
         )
-          .default('F')
-          .choices(['F', 'M', 'X']),
+          .default("F")
+          .choices(["F", "M", "X"]),
       )
       .addOption(
-        new Option('-m, --llm [llm]', 'LLM model to use').default(defaultLLM),
+        new Option("-m, --llm [llm]", "LLM model to use").default(defaultLLM),
       );
   },
 
@@ -57,42 +56,23 @@ export default {
       );
     }
 
-    const credentials = await api.loadAppCredentials(appId);
-    if (credentials === null) {
-      return fail(`Failed to get access token for ${appId}`);
-    }
+    const appApi = await api.getAppClient(appId);
+    const appApiClient = appApi.getClient();
 
-    const res = await api.saveClientCredentials(appId, credentials);
-    if (res === null)
-      return fail(`Failed to save client credentials for appId=${appId}`);
+    const messages: DialogueMessageDto[] = [];
 
-    let client: mqtt.MqttClient;
-    try {
-      client = await api.connectMqtt(appId);
-    } catch (e) {
-      return fail(`[${appId}] MQTT error: ${e.stack}`);
-    }
-
-    const messages: DialogueAgentMessageDto[] = [];
-
-    client.subscribe(`app/${appId}/dialogue/messages`);
-    client.on('message', (topic, payload) => {
-      try {
-        const message = JSON.parse(
-          payload.toString(),
-        ) as DialogueAgentMessageDto;
-        messages.push(message);
-      } catch (e: any) {
-        logger.warn(`Failed to parse message: ${e.stack}`);
-      }
-    });
+    await appApiClient.events.dialogue.onDialogueMessages(
+      (ev: DialogueMessageDto) => {
+        messages.push(ev);
+      },
+    );
 
     const showAnswer = () => {
       if (messages.length === 0) return;
 
       const fullMessage = messages
         .sort((m1, m2) => (+m1.chunkId > +m2.chunkId ? 1 : -1))
-        .reduce((text, message) => `${text} ${message.text}`, '');
+        .reduce((text, message) => `${text} ${message.text}`, "");
 
       messages.splice(0, messages.length);
 
@@ -127,7 +107,7 @@ export default {
         message,
         appId,
         sessionId,
-        gender: gender ? (gender === 'X' ? 'F' : gender) : 'F',
+        gender: gender ? (gender === "X" ? "F" : gender) : "F",
         language: language || defaultLanguage,
         llm: llm || defaultLLM,
       });
@@ -138,14 +118,12 @@ export default {
     let quit = false;
     waitInterrupt().then(() => (quit = true));
 
-    const appApi = await api.getAppClient(appId);
-
     while (!quit) {
       const answers = await feature.prompt([
         {
-          name: 'message',
-          message: 'Your message',
-          type: 'input',
+          name: "message",
+          message: "Your message",
+          type: "input",
         },
       ]);
 

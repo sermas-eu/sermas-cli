@@ -1,7 +1,7 @@
-import { Command } from 'commander';
-import { Answers, Question } from 'inquirer';
-import { CliApi } from '../api/api.cli';
-import { LoginResponseDto } from '../openapi';
+import { Command } from "commander";
+import { Answers, Question } from "inquirer";
+import { CliApi } from "../api/api.cli";
+import { LoginResponseDto } from "@sermas/api-client";
 
 export interface CliCredentialsCollection
   extends Record<string, LoginResponseDto> {
@@ -40,15 +40,15 @@ export interface PromptQuestion extends Question {
   name: string;
   message: string;
   type?:
-    | 'input'
-    | 'number'
-    | 'confirm'
-    | 'list'
-    | 'rawlist'
-    | 'expand'
-    | 'checkbox'
-    | 'password'
-    | 'editor';
+    | "input"
+    | "number"
+    | "confirm"
+    | "list"
+    | "rawlist"
+    | "expand"
+    | "checkbox"
+    | "password"
+    | "editor";
   choices?: PromptQuestionChoice | (() => PromptQuestionChoice);
   default?: string;
 }

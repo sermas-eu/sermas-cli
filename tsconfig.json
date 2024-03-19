@@ -20,6 +20,9 @@
       "@libs/*": [
         "./src/libs/*"
       ],
+      "@sermas/api-client": [
+        "../sermas-api-client/dist",
+      ],
     }
   },
   "exclude": [
@@ -30,5 +33,10 @@
     "src/**/*.ts",
     "src/**.ts",
   ],
-  "compileOnSave": false
+  "compileOnSave": false,
+  "ts-node": {
+    "require": [
+      "tsconfig-paths/register"
+    ]
+  }
 }

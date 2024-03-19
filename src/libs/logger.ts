@@ -1,7 +1,7 @@
-import winston from 'winston';
+import winston from "winston";
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.combine(
     winston.format.colorize(),
     winston.format.simple(),

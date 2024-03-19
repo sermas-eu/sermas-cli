@@ -8,7 +8,7 @@ export interface KeycloakJwtTokenDto {
   typ: string;
   azp: string;
   acr: string;
-  'allowed-origins': string[];
+  "allowed-origins": string[];
   realm_access: KeycloakJwtTokenRealmAccess;
   resource_access: KeycloakJwtTokenResourceAccess;
   scope: string;

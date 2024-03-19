@@ -1,25 +1,25 @@
-import { Command } from 'commander';
-import { CommandParams } from '../../../libs/dto/cli.dto';
-import logger from '../../../libs/logger';
-import { PlatformAppDto } from '../../../libs/openapi';
-import { fail, loadFile } from '../../../libs/util';
+import { Command } from "commander";
+import { CommandParams } from "../../../libs/dto/cli.dto";
+import logger from "../../../libs/logger";
+import { PlatformAppDto } from "@sermas/api-client";
+import { fail, loadFile } from "../../../libs/util";
 
 export default {
   setup: async (command: Command) => {
     command
       .option(
-        '-s, --skip-clients',
-        'Use to skip updating the authorization clients and only update the application. Defaults to false',
+        "-s, --skip-clients",
+        "Use to skip updating the authorization clients and only update the application. Defaults to false",
       )
       .option(
-        '-f, --filter-name [filterName]',
-        'Import only applications with name or appId matching the provided filter',
+        "-f, --filter-name [filterName]",
+        "Import only applications with name or appId matching the provided filter",
       )
       .argument(
-        '<filepath>',
-        'A file with the list of applications to import (yaml or json)',
+        "<filepath>",
+        "A file with the list of applications to import (yaml or json)",
       )
-      .description('import applications');
+      .description("import applications");
   },
 
   run: async ({ args, flags, api }: CommandParams) => {
@@ -36,11 +36,11 @@ export default {
     apps = apps instanceof Array ? apps : [apps];
 
     if (filterName && filterName.length) {
-      const appNames = filterName.split(',').map((name) => name.trim());
+      const appNames = filterName.split(",").map((name) => name.trim());
       apps = apps.filter(
         (app) =>
           appNames.filter((filter) => {
-            const nameMatch = app.name.match(new RegExp(filter, 'i'))
+            const nameMatch = app.name.match(new RegExp(filter, "i"))
               ? true
               : false;
             const appIdMatch = app.appId === filter;

@@ -102,9 +102,9 @@ export default {
       showAnswer();
     };
 
-    const sendChat = async (message: string) => {
+    const sendChat = async (text: string) => {
       const res = await appApi.sendChatMessage({
-        message,
+        text,
         appId,
         sessionId,
         gender: gender ? (gender === "X" ? "F" : gender) : "F",
@@ -112,7 +112,7 @@ export default {
         llm: llm || defaultLLM,
       });
       if (res === null) return fail();
-      logger.info(`[you] ${message}`);
+      logger.info(`[you] ${text}`);
     };
 
     let quit = false;

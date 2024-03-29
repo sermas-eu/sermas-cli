@@ -7,7 +7,7 @@ import { CliCredentialsHandler } from "./credentials";
 import {
   AppModuleConfigDto,
   CreatePlatformAppDto,
-  DialogueUserMessageDto,
+  DialogueMessageDto,
   LoginRequestDto,
   PlatformAppDto,
   PlatformAppExportFilterDto,
@@ -214,15 +214,11 @@ export class BaseApi {
     );
   }
 
-  async sendChatMessage(payload: DialogueUserMessageDto) {
+  async sendChatMessage(payload: DialogueMessageDto) {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.dialogue.chatMessage(
         payload.appId,
         payload.sessionId,
-        payload.language,
-        payload.gender,
-        payload.llm,
-        payload.actor,
         payload,
       ),
     );

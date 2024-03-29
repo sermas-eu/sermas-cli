@@ -71,7 +71,7 @@ export default {
       if (messages.length === 0) return;
 
       const fullMessage = messages
-        .sort((m1, m2) => (+m1.chunkId > +m2.chunkId ? 1 : -1))
+        .sort((m1, m2) => (+m1.chunkId < +m2.chunkId ? 1 : -1))
         .reduce((text, message) => `${text} ${message.text}`, "");
 
       messages.splice(0, messages.length);
@@ -80,6 +80,8 @@ export default {
     };
 
     const waitAnswer = async () => {
+      // sleep for the slooowy tools
+      await sleep(2000);
       logger.debug(`Waiting for response...`);
 
       const maxSleep = 5;
@@ -87,7 +89,7 @@ export default {
       let lastMessage = messages.length;
       let waitMore = true;
       while (waitMore) {
-        await sleep(1000);
+        await sleep(500);
 
         const received = messages.length !== lastMessage;
         if (received) {

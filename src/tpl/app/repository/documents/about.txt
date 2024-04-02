@@ -1,0 +1,7 @@
+SERMAS lays the foundations of next-generation XR systems, looking at how people relate and interact with the technology.
+SERMAS is a research and innovation project carried out by four universities, one system integrator, one cascade funding manager and two companies as XR adopters. 
+We started our three-year-long XR journey on 1 October 2022.
+The SERMAS Toolkit is a comprehensive set of formal and systematic methods and tools to help innovators model, develop, analyse, test, and user-study socially acceptable XR Systems.
+The SERMAS XR Agent is software that acts on a user's or other systems' behalf.
+SERMAS will create three real-world application scenarios to drive innovation and validate the results. The SERMAS pilots are a security agent in journalism training, a reception kiosk, and a virtual assistant.
+SERMAS will launch two open calls to attract innovators, high-tech startups, SMEs, and industry players to develop, deploy, and validate XR solutions and technologies.

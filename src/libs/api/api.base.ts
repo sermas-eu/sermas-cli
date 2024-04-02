@@ -12,6 +12,7 @@ import {
   PlatformAppDto,
   PlatformAppExportFilterDto,
   SermasApiClient,
+  UIAssetDto,
 } from "@sermas/api-client";
 
 export const BASE_URL = process.env.BASE_URL || "http://localhost:8080";
@@ -126,10 +127,12 @@ export class BaseApi {
 
     try {
       const res = await client.api.authentication.refreshToken({
-        refreshToken: credentials.refresh_token,
-        clientId: tokenInfo.clientId,
-        clientSecret: "",
-        appId: "",
+        requestBody: {
+          refreshToken: credentials.refresh_token,
+          clientId: tokenInfo.clientId,
+          clientSecret: "",
+          appId: "",
+        },
       });
 
       await this.credentials.save(this.clientId, res);
@@ -147,16 +150,16 @@ export class BaseApi {
     return jwtDecode<KeycloakJwtTokenDto>(token);
   }
 
-  async login(data: LoginRequestDto) {
+  async login(requestBody: LoginRequestDto) {
     logger.verbose(`Performing user login`);
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.authentication.login(data),
+      client.api.authentication.login({ requestBody }),
     );
   }
 
-  async createApp(data: CreatePlatformAppDto) {
+  async createApp(requestBody: CreatePlatformAppDto) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.createApp(data),
+      client.api.platform.createApp({ requestBody }),
     );
   }
 
@@ -169,36 +172,43 @@ export class BaseApi {
   async loadAppCredentials(appId: string) {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.platform.getClientAccessToken({
-        clientId: "application",
-        appId,
+        requestBody: {
+          clientId: "application",
+          appId,
+        },
       }),
     );
   }
 
   async removeApp(appId: string) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.removeApp(appId),
+      client.api.platform.removeApp({ appId }),
     );
   }
 
-  async updateApp(app: PlatformAppDto) {
+  async updateApp(requestBody: PlatformAppDto) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.updateApp(app),
+      client.api.platform.updateApp({ requestBody }),
     );
   }
 
-  async importApps(apps: PlatformAppDto[], skipClients?: boolean) {
+  async importApps(requestBody: PlatformAppDto[], skipClients?: boolean) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.importApps(
-        skipClients === undefined ? undefined : skipClients ? "true" : "false",
-        apps,
-      ),
+      client.api.platform.importApps({
+        skipClients:
+          skipClients === undefined
+            ? undefined
+            : skipClients
+              ? "true"
+              : "false",
+        requestBody,
+      }),
     );
   }
 
-  async exportApps(filter: PlatformAppExportFilterDto = {}) {
+  async exportApps(requestBody: PlatformAppExportFilterDto = {}) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.exportApps(filter),
+      client.api.platform.exportApps({ requestBody }),
     );
   }
 
@@ -216,31 +226,67 @@ export class BaseApi {
 
   async sendChatMessage(payload: DialogueMessageDto) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.dialogue.chatMessage(
-        payload.appId,
-        payload.sessionId,
-        payload,
-      ),
+      client.api.dialogue.chatMessage({
+        appId: payload.appId,
+        sessionId: payload.sessionId,
+        requestBody: payload,
+      }),
     );
   }
 
   async savePlatformModule(cfg: AppModuleConfigDto) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.savePlatformModule(cfg),
+      client.api.platform.savePlatformModule({ requestBody: cfg }),
     );
   }
 
   async removePlatformModule(moduleId: string) {
     return await this.requestWrapper((client: SermasApiClient) =>
-      client.api.platform.removePlatformModule(moduleId),
+      client.api.platform.removePlatformModule({
+        moduleId,
+      }),
     );
   }
 
   async removeApps(appId: string[]) {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.platform.removeApps({
-        appId,
+        requestBody: { appId },
       }),
     );
+  }
+
+  async adminUploadAsset(
+    model: Partial<UIAssetDto> & { appId: string },
+    file: Blob,
+  ) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.ui.adminSaveAsset({
+        formData: this.createFormData(model, file),
+      }),
+    );
+  }
+
+  async saveAsset(model: Partial<UIAssetDto> & { appId: string }, file: Blob) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.ui.saveAsset({
+        formData: this.createFormData(model, file),
+      }),
+    );
+  }
+
+  async getAsset(payload: { appId: string; type: string; assetId: string }) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.ui.getAsset(payload),
+    );
+  }
+
+  private createFormData(model: any, file: Blob): any {
+    const formData = new FormData();
+    formData.append("file", file);
+    for (const key in model) {
+      formData.append(key, model[key]);
+    }
+    return formData;
   }
 }

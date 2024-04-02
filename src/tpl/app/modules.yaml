@@ -1,0 +1,19 @@
+---
+# Define modules
+# Each module will have a client to access resources
+- moduleId: avatar
+  # secret will be used as client secret. 
+  # Leave empty to generate on.
+  secret: null
+  # Supported modules
+  # Each module has a set of permissions applied to its client.
+  # The full list of available permissions is available at
+  # http://localhost:8080/api/swagger#/PLATFORM/getSettings
+  supports:
+    - dialogue
+    - detection
+    - ui
+    - session
+    - platform
+  # additional module-specific configuration
+  config: {}

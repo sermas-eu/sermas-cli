@@ -1,8 +1,8 @@
-import logger from "./logger";
 import * as fs from "fs/promises";
-import * as path from "path";
 import YAML from "js-yaml";
+import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
+import logger from "./logger";
 
 export const uuid = () => uuidv4();
 
@@ -34,7 +34,8 @@ export const fail = (message?: string) => quit(message, 1);
 export const readFile = async (filepath: string) => {
   if (!filepath) return null;
   try {
-    return await fs.readFile(filepath, { encoding: "utf8" });
+    // return await fs.readFile(filepath, { encoding: "utf8" });
+    return await fs.readFile(filepath);
   } catch (e) {
     logger.verbose(`Failed to read file ${filepath}: ${e.message}`);
     return null;
@@ -124,4 +125,11 @@ export const rmFile = async (file: string) => {
     return true;
   } catch {}
   return false;
+};
+
+export const fileExists = (file) => {
+  return fs
+    .access(file, fs.constants.F_OK)
+    .then(() => true)
+    .catch(() => false);
 };

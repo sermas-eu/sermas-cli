@@ -1,0 +1,22 @@
+---
+# application configuration
+
+# requires login
+login: true
+
+# id of the default avatar
+avatar: anna
+
+# background for the avatar
+background: milkyway
+
+# language of the avatar
+language: en-GB
+
+# LLM provider
+llm: default
+
+# default avatar prompt
+prompt:
+  text: >-
+    You are a friendly assistant in charge of helping users getting started with the SERMAS project.

@@ -1,0 +1,8 @@
+---
+
+name: Application name
+description: Description for the application
+
+# Should be available in apps list
+public: true
+

@@ -1,0 +1,11 @@
+---	
+# AGV robot definition
+name: My AGV
+videoUrl: http://robot.local:8099
+map:
+  imageUrl: http://robot.local/map.png
+  width: 640
+  height: 480
+  # robot initial position
+  originOffsetX: 10
+  originOffsetY: 10

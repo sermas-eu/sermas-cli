@@ -66,12 +66,12 @@ export default {
 
         const filename = appStructure.files.avatars[name];
         logger.info(`Uploading model ${name} (${filename})`);
-        await api.uploadAvatarModel(
+        await api.saveAsset(
           {
             appId,
             filename: path.basename(appStructure.files.avatars[name]),
             metadata: {},
-            type: "models",
+            type: "avatars",
             ts: new Date().toString(),
           },
           new Blob([await readFile(filename)], {
@@ -88,7 +88,7 @@ export default {
 
         const filename = appStructure.files.backgrounds[name];
         logger.info(`Uploading background ${name} (${filename})`);
-        await api.uploadBackround(
+        await api.saveAsset(
           {
             appId,
             filename: path.basename(appStructure.files.backgrounds[name]),

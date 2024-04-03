@@ -282,11 +282,15 @@ export class BaseApi {
   }
 
   private createFormData(model: any, file: Blob): any {
-    const formData = new FormData();
-    formData.append("file", file);
-    for (const key in model) {
-      formData.append(key, model[key]);
-    }
-    return formData;
+    // const formData = new FormData();
+    // formData.append("file", file);
+    // for (const key in model) {
+    //   formData.append(key, model[key]);
+    // }
+    // return formData;
+    return {
+      ...model,
+      file,
+    };
   }
 }

@@ -7,8 +7,8 @@ import {
   AppToolsDTO,
   AppUserDto,
   PlatformAppDto,
-  RepositoryAvatarModelDto,
-  RepositoryBackgroundModelDto,
+  RepositoryAvatarDto,
+  RepositoryBackgroundDto,
   RepositoryConfigDto,
 } from "@sermas/api-client";
 import * as fs from "fs/promises";
@@ -124,8 +124,9 @@ export const scanRepository = async (basepath: string) => {
       name = metadata["name"];
     }
 
-    const background: RepositoryBackgroundModelDto = {
+    const background: RepositoryBackgroundDto = {
       path: path.basename(img),
+      type: "backgrounds",
       metadata,
       name,
       id,
@@ -142,18 +143,19 @@ export const scanRepository = async (basepath: string) => {
   });
 
   for (const avatarYaml of avatars) {
-    const avatar = await loadYAML<RepositoryAvatarModelDto>(avatarYaml);
+    const avatar = await loadYAML<RepositoryAvatarDto>(avatarYaml);
     const ext = path.extname(avatarYaml);
 
     const id = path.basename(avatarYaml).replace(ext, "").toLowerCase();
 
-    const model: RepositoryAvatarModelDto = {
+    const model: RepositoryAvatarDto = {
       ...avatar,
+      type: "avatars",
       id,
     };
 
-    if (!avatar.modelPath.startsWith("http")) {
-      const modelPath = `${repositoryPath}/avatars/${avatar.modelPath}`;
+    if (!avatar.path.startsWith("http")) {
+      const modelPath = `${repositoryPath}/avatars/${avatar.path}`;
       const exists = await fileExists(modelPath);
       if (exists) {
         files.avatars[id] = modelPath;

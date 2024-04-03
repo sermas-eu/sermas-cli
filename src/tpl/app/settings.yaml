@@ -2,7 +2,7 @@
 # application configuration
 
 # requires login
-login: true
+login: false
 
 # id of the default avatar
 avatar: anna

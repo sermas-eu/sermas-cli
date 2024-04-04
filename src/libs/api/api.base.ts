@@ -195,12 +195,7 @@ export class BaseApi {
   async importApps(requestBody: PlatformAppDto[], skipClients?: boolean) {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.platform.importApps({
-        skipClients:
-          skipClients === undefined
-            ? undefined
-            : skipClients
-              ? "true"
-              : "false",
+        skipClients: skipClients === true ? "true" : "",
         requestBody,
       }),
     );

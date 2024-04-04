@@ -29,8 +29,24 @@ export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
   const app: PlatformAppDto = ({ ...appStructure.app } || {}) as PlatformAppDto;
 
   app.appId = appStructure.appId || app.appId || undefined;
-  app.modules = appStructure.modules || [];
-  app.settings = appStructure.settings || undefined;
+
+  const modules = [
+    ...(appStructure.modules?.length ? appStructure.modules : []),
+  ];
+  if (app.modules?.length) {
+    modules.push(
+      ...app.modules.filter(
+        (m) => modules.filter((m2) => m2.moduleId !== m.moduleId).length === 0,
+      ),
+    );
+  }
+
+  app.modules = modules;
+  app.settings = {
+    ...(app.settings || {}),
+    ...(appStructure.settings || {}),
+  } as AppSettingsDto;
+
   app.tools = appStructure.tools || [];
   app.repository = appStructure.repository || undefined;
 

@@ -55,7 +55,7 @@ export default {
             filepath: appPath,
             jwt,
             saveApp: async (app: PlatformAppDto) => {
-              await api.importApps([app]);
+              await api.importApps([app], false);
               return app;
             },
           }),

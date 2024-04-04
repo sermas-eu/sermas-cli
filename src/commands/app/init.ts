@@ -1,10 +1,10 @@
+import { CommandParams } from "@libs/dto/cli.dto";
+import logger from "@libs/logger";
+import { fail } from "@libs/util";
 import { Command } from "commander";
+import * as path from "path";
 
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-import { fail } from "../../libs/util";
-
-import { copyTemplate } from "@libs/app";
+import { copyTemplate } from "@libs/app/structure";
 
 export default {
   setup: async (command: Command) => {
@@ -18,10 +18,14 @@ export default {
   },
 
   run: async ({ args, flags, feature, api }: CommandParams) => {
-    const filepath = args[0];
+    const currentPwd = process.env.CURRENT_PWD || "";
+
+    const userpath = args[0];
     const force = flags.force;
 
-    if (!filepath) return fail(`Please provide a destination path`);
+    if (!userpath) return fail(`Please provide a destination path`);
+
+    const filepath = currentPwd ? path.resolve(currentPwd, userpath) : userpath;
 
     const fullpath = await copyTemplate(filepath, force);
     if (fullpath === null) {

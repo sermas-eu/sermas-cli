@@ -11,7 +11,11 @@ export default {
     command
       .option(
         "-s, --skip-clients",
-        "Use to skip updating the authorization clients and only update the application. Defaults to false",
+        "Skip the update of the authorization clients and only update the application. Defaults to false",
+      )
+      .option(
+        "-u, --skip-upload",
+        "Skip upload of the repository files. Default to false",
       )
       .option(
         "-f, --filter-name [filterName]",
@@ -35,7 +39,7 @@ export default {
     const importDirPath = currentPwd
       ? path.resolve(currentPwd, userpath)
       : userpath;
-    const { skipClients, filterName } = flags;
+    const { skipClients, skipUpload, filterName } = flags;
 
     logger.info(`Searching apps in ${importDirPath}`);
 
@@ -58,6 +62,7 @@ export default {
               await api.importApps([app], false);
               return app;
             },
+            skipUpload,
           }),
         );
       } catch (e: any) {

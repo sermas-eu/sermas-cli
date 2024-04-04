@@ -11,8 +11,9 @@ export const saveAppFromDirectory = async (data: {
   jwt: KeycloakJwtTokenDto;
   api: CliApi;
   saveApp?: (app: PlatformAppDto) => Promise<any>;
+  skipUpload?: boolean;
 }) => {
-  const { filepath, jwt, api } = data;
+  const { filepath, jwt, api, skipUpload } = data;
 
   const appStructure = await loadAppStructure(filepath);
   const app = structureToApp(appStructure);
@@ -41,7 +42,7 @@ export const saveAppFromDirectory = async (data: {
   logger.info(`Application ${app.name} saved with id=${appId}`);
 
   // upload assets
-  if (appStructure.repository) {
+  if (appStructure.repository && skipUpload !== true) {
     logger.debug(`Uploading repository resources`);
     for (const type in appStructure.repository) {
       if (!appStructure.repository[type]) continue;

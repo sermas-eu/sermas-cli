@@ -1,10 +1,10 @@
 import logger from "@libs/logger";
-import { fileExists } from "../util";
+import { fileExists, loadFile } from "../util";
 
 import { RepositoryAssetTypes, RepositoryConfigDto } from "@sermas/api-client";
 import { glob } from "glob";
 import * as path from "path";
-import { loadDataFile } from "./util";
+import { DataFileExtensions, loadDataFile } from "./util";
 
 export type RepositoryFiles = Record<
   RepositoryAssetTypes,
@@ -104,7 +104,38 @@ export const scanRepository = async (basepath: string) => {
       },
     );
 
-    // console.warn(handlerType, assets);
+    const yamlExts = `.{${DataFileExtensions.join(",")}}`;
+    let assetsYaml = await glob(
+      [`${globBasePath}/*${yamlExts}`, `${globBasePath}/**/*${yamlExts}`],
+      {
+        nodir: true,
+      },
+    );
+
+    assetsYaml = assetsYaml.filter((yamlPath) => {
+      let partialPath = yamlPath;
+      DataFileExtensions.forEach((ext) => {
+        partialPath = partialPath.replace(new RegExp(`.${ext}$`, "i"), "");
+      });
+      // skip format like `file.glb.yaml` which contains metadata
+      return !assets.includes(partialPath);
+    });
+
+    // add plain definition files, that may not have a file to upload
+    for (const assetPath of assetsYaml) {
+      const asset = await loadFile(assetPath);
+      if (asset) {
+        const name = path
+          .basename(assetPath)
+          .replace(new RegExp(`[.]${handler.extensions.join("|")}$`), "");
+        const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+
+        if (!asset.id) asset.id = id;
+        if (!asset.name) asset.name = name;
+
+        repository[handlerType].push(asset as any);
+      }
+    }
 
     for (const assetPath of assets) {
       const metadata =
@@ -115,7 +146,7 @@ export const scanRepository = async (basepath: string) => {
         "",
       );
 
-      // use dirnmae as id
+      // use dirname as id
       const assetRelativePathParts = assetRelativePath.split("/");
 
       const baseName =

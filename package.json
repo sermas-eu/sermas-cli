@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@inquirer/rawlist": "^1.2.14",
-    "@sermas/api-client": "^1.0.0-alpha.34",
+    "@sermas/api-client": "^1.0.0-alpha.35",
     "axios": "^1.6.5",
     "commander": "^11.1.0",
     "form-data": "^4.0.0",

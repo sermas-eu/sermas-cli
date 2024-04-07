@@ -19,7 +19,7 @@ export default {
       )
       .option(
         "-f, --filter-name [filterName]",
-        "Import only applications with name or appId matching the provided filter",
+        "Import only applications with a directory name matching the provided filter. Provide a list separated by comma.",
       )
       .argument(
         "<dirpath>",
@@ -50,8 +50,18 @@ export default {
 
     const apps = files.map((file) => path.dirname(file));
 
+    const filterApps: string[] = (filterName || "")
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name && name.length > 0);
+
     const res: PlatformAppDto[] = [];
     for (const appPath of apps) {
+      if (filterApps && filterApps.length) {
+        const dirname = path.basename(appPath);
+        if (!filterApps.includes(dirname)) continue;
+      }
+
       try {
         res.push(
           await saveAppFromDirectory({

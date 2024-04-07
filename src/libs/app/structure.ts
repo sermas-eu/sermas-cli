@@ -47,7 +47,16 @@ export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
     ...(appStructure.settings || {}),
   } as AppSettingsDto;
 
-  app.tools = appStructure.tools || [];
+  const tools = appStructure.tools ? [...appStructure.tools] : [];
+  if (app.tools) {
+    app.tools.forEach((tool) => {
+      // keep from structure
+      if (tools.filter((t) => t.name === tool.name).length) return;
+      tools.push(tool);
+    });
+  }
+  app.tools = tools;
+
   app.repository = appStructure.repository || undefined;
 
   return app;

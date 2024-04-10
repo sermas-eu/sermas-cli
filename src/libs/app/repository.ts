@@ -54,7 +54,7 @@ const handlers: Record<RepositoryAssetTypes, RepositoryHandler> = {
     },
   },
   robots: {
-    extensions: ["yaml", "json"],
+    extensions: undefined,
     handler: async (param: RepositoryHandlerParam) => {
       return { ...param };
     },
@@ -92,17 +92,25 @@ export const scanRepository = async (basepath: string) => {
       continue;
     }
 
+    const assets: string[] = [];
+
     const globBasePath = `${repositoryPath}/${handlerType}`;
-    const globExt =
-      handler.extensions.length > 1
-        ? `.{${handler.extensions.join(",")}}`
-        : `.${handler.extensions.at(0)}`;
-    const assets = await glob(
-      [`${globBasePath}/*${globExt}`, `${globBasePath}/**/*${globExt}`],
-      {
-        nodir: true,
-      },
-    );
+
+    if (handler.extensions) {
+      const globExt =
+        handler.extensions && handler.extensions.length > 1
+          ? `.{${handler.extensions.join(",")}}`
+          : `.${handler.extensions.at(0)}`;
+
+      const fileAssets = await glob(
+        [`${globBasePath}/*${globExt}`, `${globBasePath}/**/*${globExt}`],
+        {
+          nodir: true,
+        },
+      );
+
+      assets.push(...fileAssets);
+    }
 
     const yamlExts = `.{${DataFileExtensions.join(",")}}`;
     let assetsYaml = await glob(
@@ -125,9 +133,18 @@ export const scanRepository = async (basepath: string) => {
     for (const assetPath of assetsYaml) {
       const asset = await loadFile(assetPath);
       if (asset) {
-        const name = path
-          .basename(assetPath)
-          .replace(new RegExp(`[.]${handler.extensions.join("|")}$`), "");
+        let name = path.basename(assetPath);
+        name = name.replace(
+          new RegExp(
+            `[.]${
+              handler.extensions && handler.extensions.length
+                ? handler.extensions.join("|")
+                : path.extname(name).substring(1)
+            }$`,
+          ),
+          "",
+        );
+
         const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
 
         if (!asset.id) asset.id = id;

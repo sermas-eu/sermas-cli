@@ -18,7 +18,7 @@ export default {
         "Skip upload of the repository files. Default to false",
       )
       .option(
-        "-f, --filter-name [filterName]",
+        "-f, --filter [filterName]",
         "Import only applications with a directory name matching the provided filter. Provide a list separated by comma.",
       )
       .argument(
@@ -39,7 +39,7 @@ export default {
     const importDirPath = currentPwd
       ? path.resolve(currentPwd, userpath)
       : userpath;
-    const { skipClients, skipUpload, filterName } = flags;
+    const { skipClients, skipUpload, filter } = flags;
 
     logger.info(`Searching apps in ${importDirPath}`);
 
@@ -50,7 +50,7 @@ export default {
 
     const apps = files.map((file) => path.dirname(file));
 
-    const filterApps: string[] = (filterName || "")
+    const filterApps: string[] = (filter || "")
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name && name.length > 0);
@@ -77,6 +77,7 @@ export default {
         );
       } catch (e: any) {
         logger.warn(`Failed to import ${path.basename(appPath)} (${appPath})`);
+        logger.debug(e.stack);
       }
     }
 

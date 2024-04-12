@@ -1,4 +1,4 @@
-import logger from "@libs/logger";
+import logger from "../../libs/logger";
 import { fileExists, loadFile } from "../util";
 
 import { RepositoryAssetTypes, RepositoryConfigDto } from "@sermas/api-client";

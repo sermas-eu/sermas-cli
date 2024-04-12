@@ -1,4 +1,4 @@
-import logger from "@libs/logger";
+import logger from "../../libs/logger";
 import { fileExists, loadYAML, saveFile } from "../util";
 
 import {

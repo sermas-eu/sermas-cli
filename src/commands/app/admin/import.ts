@@ -1,6 +1,6 @@
-import { saveAppFromDirectory } from "@libs/app/save";
-import { CommandParams } from "@libs/dto/cli.dto";
-import logger from "@libs/logger";
+import { saveAppFromDirectory } from "../../../libs/app/save";
+import { CommandParams } from "../../../libs/dto/cli.dto";
+import logger from "../../../libs/logger";
 import { PlatformAppDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { glob } from "glob";

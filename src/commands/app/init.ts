@@ -1,10 +1,10 @@
-import { CommandParams } from "@libs/dto/cli.dto";
-import logger from "@libs/logger";
-import { fail } from "@libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs//logger";
+import { fail } from "../../libs//util";
 import { Command } from "commander";
 import * as path from "path";
 
-import { copyTemplate } from "@libs/app/structure";
+import { copyTemplate } from "../../libs//app/structure";
 
 export default {
   setup: async (command: Command) => {

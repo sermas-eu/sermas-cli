@@ -1,4 +1,4 @@
-import { CommandParams } from "@libs/dto/cli.dto";
+import { CommandParams } from "../../libs/dto/cli.dto";
 import { Command } from "commander";
 import logger from "../../libs/logger";
 import { fail } from "../../libs/util";

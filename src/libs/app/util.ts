@@ -1,4 +1,4 @@
-import { fileExists, loadFile } from "@libs/util";
+import { fileExists, loadFile } from "../../libs/util";
 
 export const DataFileExtensions = ["yml", "yaml", "json"];
 

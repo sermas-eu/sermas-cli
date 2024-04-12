@@ -22,4 +22,9 @@ COPY --from=build /app/dist ./dist
 
 RUN npm link .
 
+RUN mkdir /data
+
+ENV BASE_URL=http://172.17.0.1:8080
+ENV CONFIG_DIR=/data
+
 ENTRYPOINT [ "sermas-cli" ]

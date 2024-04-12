@@ -16,8 +16,10 @@ import {
 import logger from "./libs/logger";
 import { FileFormatType, toData, toJSON } from "./libs/util";
 
-const credentialsFile = path.resolve(__dirname, `../credentials.json`);
-const cliConfigFile = path.resolve(__dirname, `../cli.json`);
+const configDir = process.env.CONFIG_DIR || __dirname;
+
+const credentialsFile = path.resolve(configDir, `../credentials.json`);
+const cliConfigFile = path.resolve(configDir, `../cli.json`);
 const packageJson = path.resolve(__dirname, "../package.json");
 
 export class CliProgram {

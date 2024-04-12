@@ -1,5 +1,5 @@
-import { CliApi } from "@libs/api/api.cli";
-import { KeycloakJwtTokenDto } from "@libs/dto/keycloak.dto";
+import { CliApi } from "../../libs/api/api.cli";
+import { KeycloakJwtTokenDto } from "../../libs/dto/keycloak.dto";
 import { PlatformAppDto, RepositoryAssetTypes } from "@sermas/api-client";
 import { lookup } from "mime-types";
 import logger from "../../libs/logger";

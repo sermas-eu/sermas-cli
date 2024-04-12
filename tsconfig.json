@@ -19,10 +19,7 @@
     "paths": {
       "@libs/*": [
         "./src/libs/*"
-      ],
-      "@sermas/api-client": [
-        "../sermas-api-client/dist",
-      ],
+      ]
     }
   },
   "exclude": [

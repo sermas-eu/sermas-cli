@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!./node_modules/.bin/ts-node
 import { CliProgram } from "./cli";
 import logger from "./libs/logger";
 

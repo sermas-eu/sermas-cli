@@ -1,7 +1,7 @@
 ---
 
-name: Example
-description: Description for the application
+name: Hello SERMAS
+description: Learn about the SERMAS project and the toolkit
 
 # Should be available in apps list
 public: true

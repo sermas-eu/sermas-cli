@@ -61,6 +61,19 @@ const handlers: Record<RepositoryAssetTypes, RepositoryHandler> = {
   },
 };
 
+const getNameFromFile = (assetPath: string, extensions?: string[]) => {
+  let name = path.basename(assetPath);
+  const ext = path.extname(name);
+  extensions = extensions ? [...extensions.map((e) => `.${e}`), ext] : [ext];
+  name = name.replace(new RegExp(`${extensions.join("|")}$`), "");
+  return name;
+};
+
+const getIdFromName = (name: string) => {
+  const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+  return id;
+};
+
 export const scanRepository = async (basepath: string) => {
   let repositoryPath = `${basepath}/repository`;
   if (!(await fileExists(repositoryPath))) {
@@ -96,6 +109,7 @@ export const scanRepository = async (basepath: string) => {
 
     const globBasePath = `${repositoryPath}/${handlerType}`;
 
+    // find assets by extension eg *.glb
     if (handler.extensions) {
       const globExt =
         handler.extensions && handler.extensions.length > 1
@@ -112,6 +126,7 @@ export const scanRepository = async (basepath: string) => {
       assets.push(...fileAssets);
     }
 
+    // find assets definiton eg *.json|yaml|yml...
     const yamlExts = `.{${DataFileExtensions.join(",")}}`;
     let assetsYaml = await glob(
       [`${globBasePath}/*${yamlExts}`, `${globBasePath}/**/*${yamlExts}`],
@@ -120,36 +135,32 @@ export const scanRepository = async (basepath: string) => {
       },
     );
 
+    // skip metadata files
     assetsYaml = assetsYaml.filter((yamlPath) => {
       let partialPath = yamlPath;
       DataFileExtensions.forEach((ext) => {
         partialPath = partialPath.replace(new RegExp(`.${ext}$`, "i"), "");
       });
-      // skip format like `file.glb.yaml` which contains metadata
-      return !assets.includes(partialPath);
+      // skip format like `file.glb.yaml` or `file.yaml`  which contains metadata
+      return (
+        !assets.includes(partialPath) &&
+        !assets
+          .map((a) => a.replace(new RegExp(`${path.extname(a)}$`), ""))
+          .includes(partialPath)
+      );
     });
 
     // add plain definition files, that may not have a file to upload
     for (const assetPath of assetsYaml) {
       const asset = await loadFile(assetPath);
       if (asset) {
-        let name = path.basename(assetPath);
-        name = name.replace(
-          new RegExp(
-            `[.]${
-              handler.extensions && handler.extensions.length
-                ? handler.extensions.join("|")
-                : path.extname(name).substring(1)
-            }$`,
-          ),
-          "",
-        );
-
-        const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+        const name = getNameFromFile(assetPath, handler.extensions);
+        const id = getIdFromName(name);
 
         if (!asset.id) asset.id = id;
         if (!asset.name) asset.name = name;
 
+        logger.debug(`Added asset config ${handlerType} ${assetPath}`);
         repository[handlerType].push(asset as any);
       }
     }
@@ -171,11 +182,8 @@ export const scanRepository = async (basepath: string) => {
           ? assetRelativePathParts[0]
           : path.basename(assetPath);
 
-      const name = baseName.replace(
-        new RegExp(`[.]${handler.extensions.join("|")}$`),
-        "",
-      );
-      const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+      const name = getNameFromFile(baseName, handler.extensions);
+      const id = getIdFromName(name);
 
       const asset = await handler.handler({
         path: assetRelativePath,
@@ -186,6 +194,7 @@ export const scanRepository = async (basepath: string) => {
       });
 
       if (asset) {
+        logger.debug(`Added asset file ${handlerType} ${assetPath}`);
         repository[handlerType].push(asset as any);
         files[handlerType][id] = assetPath;
       }

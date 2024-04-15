@@ -1,13 +1,14 @@
 
+IMAGE=ghcr.io/sermas-eu/cli:dev
 
 docker/build:
-	docker build . -t ghcr.io/sermas-eu/cli:latest
+	docker build . -t ${IMAGE}
 
 docker/bash:
-	docker run --rm -it --entrypoint bash ghcr.io/sermas-eu/cli:latest
+	docker run --rm -it --entrypoint bash ${IMAGE}
 
 docker/run:
-	docker run --rm -it ghcr.io/sermas-eu/cli:latest
+	docker run --rm -it ${IMAGE}
 
 docker/push:
-	docker push ghcr.io/sermas-eu/cli:latest
+	docker push ${IMAGE}

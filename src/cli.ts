@@ -13,6 +13,7 @@ import {
   CommandParams,
   PromptQuestion,
 } from "./libs/dto/cli.dto";
+import { formatHelpAsMarkdown } from "./libs/help";
 import logger from "./libs/logger";
 import { FileFormatType, toData, toJSON } from "./libs/util";
 
@@ -48,6 +49,7 @@ export class CliProgram {
 
       .name(CLI_NAME)
       .version(CLI_VERSION)
+      .description("Manage and interact with the SERMAS Toolkit API")
 
       // https://github.com/tj/commander.js?tab=readme-ov-file#parsing-configuration
       // each option is parsed and available by the relative command
@@ -124,51 +126,83 @@ export class CliProgram {
       leaf: tree,
     });
 
-    program.command("completion").action(async () => {
-      const completions = process.argv.slice(
-        process.argv.indexOf("completion") + 1,
-      );
+    program
+      .command("docs-gen")
+      .description("generate markdown documentation")
+      .action(async () => {
+        const docs: Record<string, string> = {};
 
-      const depth = +completions.shift() - 1;
-      const words = completions
-        .slice(1)
-        .reverse()
-        .filter((w) => w !== CLI_NAME);
+        const traverse = async (cmd: Command, parent?: string[]) => {
+          const isRoot = parent === undefined;
+          parent = isRoot ? [cmd.name()] : parent;
+          const cmdName = [...parent].join("--");
 
-      const printOptions = (options: string[], match?: string) => {
-        console.log(
-          options.filter((c) => !match || c.startsWith(match)).join("\n"),
+          const help = formatHelpAsMarkdown(cmd, cmd.createHelp(), {
+            anchor: isRoot ? undefined : cmdName,
+          });
+
+          // console.log(`parent ${parent.join(" -> ")}`);
+          // console.log(`cmd ${cmdName}`);
+
+          await Promise.all(
+            cmd.commands.map((c) => {
+              return traverse(c, [...parent, c.name()]);
+            }),
+          );
+
+          docs[cmdName] = help;
+        };
+
+        await traverse(program);
+
+        // await fs.rmdir("./docs", { recursive: true });
+        await fs.mkdir("./docs", { recursive: true });
+        const filename = `./docs/${program.name()}.md`;
+        await fs.writeFile(filename, "");
+
+        await Promise.all(
+          Object.keys(docs)
+            .sort()
+            .map((key) => {
+              return fs.appendFile(filename, docs[key]);
+            }),
         );
-      };
 
-      // console.error(words);
+        // process.exit();
+      });
 
-      // const log = async (data) =>
-      //   await fs.appendFile(
-      //     './log.txt',
-      //     (typeof data === 'string' ? data : JSON.stringify(data)) + '\n',
-      //   );
+    program
+      .command("completion")
+      .description("generate bash completion")
+      .action(async () => {
+        const completions = process.argv.slice(
+          process.argv.indexOf("completion") + 1,
+        );
 
-      // log('');
-      // log(`position ${depth}`);
-      // log(words);
+        const depth = +completions.shift() - 1;
+        const words = completions
+          .slice(1)
+          .reverse()
+          .filter((w) => w !== CLI_NAME);
 
-      let subcommand = commands;
-      if (words.length > 0) {
-        let i = 0;
-        while (i < depth) {
-          subcommand = commands[words[i]];
-          i++;
+        const printOptions = (options: string[], match?: string) => {
+          console.log(
+            options.filter((c) => !match || c.startsWith(match)).join("\n"),
+          );
+        };
+
+        let subcommand = commands;
+        if (words.length > 0) {
+          let i = 0;
+          while (i < depth) {
+            subcommand = commands[words[i]];
+            i++;
+          }
         }
-      }
 
-      const options = subcommand ? Object.keys(subcommand) : [];
-
-      // log('options');
-      // log(options);
-
-      printOptions(options);
-    });
+        const options = subcommand ? Object.keys(subcommand) : [];
+        printOptions(options);
+      });
 
     program.parse();
   }

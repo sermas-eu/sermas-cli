@@ -160,12 +160,56 @@ export class CliProgram {
         const filename = `./docs/${program.name()}.md`;
         await fs.writeFile(filename, "");
 
+        const keys = Object.keys(docs).sort();
+
+        const tocTree: Record<string, any> = {};
+        keys.forEach((key) => {
+          const baseCommand = key.replace(program.name(), "");
+          if (!baseCommand.length) {
+            tocTree[""] = {
+              group: `- <a href="#${key}">SERMAS CLI overview</a>\n`,
+            };
+            return;
+          }
+
+          const parts = baseCommand.split("--").slice(1);
+          const current = parts.shift();
+          const isGroup = parts.length === 0;
+
+          const title = docs[key].split("\n")[1];
+          const matches = title.split("</a>");
+
+          const label =
+            matches.length == 2 ? matches.pop() : key.replace("--", " ");
+
+          const markdown = `- <a href="#${key}">${label}</a>\n`;
+
+          tocTree[current] = tocTree[current] || {
+            group: "",
+            commands: [],
+          };
+          if (isGroup) {
+            tocTree[current].group = markdown;
+          } else {
+            tocTree[current].commands = tocTree[current].commands || [];
+            tocTree[current].commands.push(`  ${markdown}`);
+          }
+        });
+
+        const toc = Object.keys(tocTree)
+          .map((groupKey) => {
+            return [
+              tocTree[groupKey].group,
+              (tocTree[groupKey].commands || []).join("\n"),
+            ].join("\n");
+          })
+          .join("");
+        await fs.appendFile(filename, toc);
+
         await Promise.all(
-          Object.keys(docs)
-            .sort()
-            .map((key) => {
-              return fs.appendFile(filename, docs[key]);
-            }),
+          keys.map((key) => {
+            return fs.appendFile(filename, docs[key]);
+          }),
         );
 
         // process.exit();

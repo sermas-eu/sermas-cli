@@ -1,13 +1,21 @@
 import { Command, Help } from "commander";
 
-const sectionPrefix = "\n###";
-const subsectionPrefix = "\n####";
+const sectionPrefix = "### ";
+const subsectionPrefix = "####";
 
 type MarkdownOpts = {
   showGlobalOptions?: boolean;
   skipHelp?: boolean;
   anchor?: string;
 };
+
+const sanitizeHtml = (t: string) =>
+  (t || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 export const formatHelpAsMarkdown = (
   cmd: Command,
@@ -30,11 +38,10 @@ export const formatHelpAsMarkdown = (
       const fullText = `\`${term}\` ${description}`;
       return fullText;
     }
-    return term;
+    return sanitizeHtml(term);
   }
   function formatList(textArray) {
-    return textArray.map((t) => "- " + t).join("\n");
-    //   .replace(/^/gm, " ".repeat(itemIndentWidth));
+    return textArray.map((t) => sanitizeHtml("- " + t)).join("\n");
   }
 
   let output: string[] = [];
@@ -49,19 +56,24 @@ export const formatHelpAsMarkdown = (
   // Usage
   const usage = helper.commandUsage(cmd);
 
-  const anchorStart = opts.anchor ? `<a name="${opts.anchor}">` : "";
-  const anchorEnd = opts.anchor ? `</a>` : "";
+  const anchor = opts.anchor ? `<a name="${opts.anchor}"></a>` : "";
 
+  let intro: string = "";
   if (description) {
-    output.push(
-      anchorStart,
-      `${sectionPrefix} ${description}`,
-      anchorEnd,
+    intro = [
+      "\n",
+      sectionPrefix,
+      anchor,
+      sanitizeHtml(
+        description.substring(0, 1).toUpperCase() + description.substring(1),
+      ),
       `\n\`${usage}\``,
-    );
+    ].join("");
   } else {
-    output.push(anchorStart, `${sectionPrefix} ${usage}`, anchorEnd);
+    intro = ["\n", sectionPrefix, anchor, sanitizeHtml(usage)].join("");
   }
+
+  output.push(intro);
 
   // Arguments
   const argumentList = helper.visibleArguments(cmd).map((argument) => {
@@ -72,7 +84,7 @@ export const formatHelpAsMarkdown = (
   });
   if (argumentList.length > 0) {
     output = output.concat([
-      `${subsectionPrefix} Arguments:`,
+      `\n${subsectionPrefix} Arguments:`,
       formatList(argumentList),
       "",
     ]);
@@ -93,7 +105,7 @@ export const formatHelpAsMarkdown = (
     });
   if (optionList.length > 0) {
     output = output.concat([
-      `${subsectionPrefix} Options:`,
+      `\n${subsectionPrefix} Options:`,
       formatList(optionList),
       "",
     ]);
@@ -124,7 +136,7 @@ export const formatHelpAsMarkdown = (
   });
   if (commandList.length > 0) {
     output = output.concat([
-      `${subsectionPrefix} Commands:`,
+      `\n${subsectionPrefix} Commands:`,
       formatList(commandList),
       "",
     ]);

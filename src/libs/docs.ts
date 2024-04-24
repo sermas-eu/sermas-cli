@@ -9,13 +9,81 @@ type MarkdownOpts = {
   anchor?: string;
 };
 
-const sanitizeHtml = (t: string) =>
-  (t || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+export const generateDocs = (program: Command) => {
+  const docs: Record<string, string> = {};
+
+  const traverse = (cmd: Command, parent?: string[]) => {
+    const isRoot = parent === undefined;
+    parent = isRoot ? [cmd.name()] : parent;
+    const cmdName = [...parent].join("--");
+
+    const help = formatHelpAsMarkdown(cmd, cmd.createHelp(), {
+      anchor: isRoot ? undefined : cmdName,
+    });
+
+    cmd.commands.forEach((c) => {
+      traverse(c, [...parent, c.name()]);
+    });
+
+    docs[cmdName] = help;
+  };
+
+  traverse(program);
+
+  const keys = Object.keys(docs).sort();
+
+  const tocTree: Record<string, any> = {};
+  keys.forEach((key) => {
+    const baseCommand = key.replace(program.name(), "");
+    if (!baseCommand.length) {
+      tocTree[""] = {
+        group: `- <a href="#${key}">SERMAS CLI overview</a>\n`,
+      };
+      return;
+    }
+
+    const parts = baseCommand.split("--").slice(1);
+    const current = parts.shift();
+    const isGroup = parts.length === 0;
+
+    const title = docs[key].split("\n")[1];
+    const matches = title.split("</a>");
+
+    const label = matches.length == 2 ? matches.pop() : key.replace("--", " ");
+
+    const markdown = `- <a href="#${key}">${label}</a>\n`;
+
+    tocTree[current] = tocTree[current] || {
+      group: "",
+      commands: [],
+    };
+    if (isGroup) {
+      tocTree[current].group = markdown;
+    } else {
+      tocTree[current].commands = tocTree[current].commands || [];
+      tocTree[current].commands.push(`  ${markdown}`);
+    }
+  });
+
+  let output = "";
+
+  const toc = Object.keys(tocTree)
+    .map((groupKey) => {
+      return [
+        tocTree[groupKey].group,
+        (tocTree[groupKey].commands || []).join("\n"),
+      ].join("\n");
+    })
+    .join("");
+
+  output += toc;
+
+  keys.map((key) => {
+    output += docs[key];
+  });
+
+  return output;
+};
 
 export const formatHelpAsMarkdown = (
   cmd: Command,
@@ -38,10 +106,10 @@ export const formatHelpAsMarkdown = (
       const fullText = `\`${term}\` ${description}`;
       return fullText;
     }
-    return sanitizeHtml(term);
+    return term;
   }
   function formatList(textArray) {
-    return textArray.map((t) => sanitizeHtml("- " + t)).join("\n");
+    return textArray.map((t) => "- " + t).join("\n");
   }
 
   let output: string[] = [];
@@ -79,7 +147,7 @@ export const formatHelpAsMarkdown = (
   const argumentList = helper.visibleArguments(cmd).map((argument) => {
     return formatItem(
       helper.argumentTerm(argument),
-      helper.argumentDescription(argument),
+      sanitizeHtml(helper.argumentDescription(argument)),
     );
   });
   if (argumentList.length > 0) {
@@ -100,7 +168,7 @@ export const formatHelpAsMarkdown = (
     .map((option) => {
       return formatItem(
         helper.optionTerm(option),
-        helper.optionDescription(option),
+        sanitizeHtml(helper.optionDescription(option)),
       );
     });
   if (optionList.length > 0) {
@@ -115,7 +183,7 @@ export const formatHelpAsMarkdown = (
     const globalOptionList = helper.visibleGlobalOptions(cmd).map((option) => {
       return formatItem(
         helper.optionTerm(option),
-        helper.optionDescription(option),
+        sanitizeHtml(helper.optionDescription(option)),
       );
     });
     if (globalOptionList.length > 0) {
@@ -128,12 +196,15 @@ export const formatHelpAsMarkdown = (
   }
 
   // Commands
-  const commandList = helper.visibleCommands(cmd).map((cmd) => {
-    return formatItem(
-      helper.subcommandTerm(cmd),
-      helper.subcommandDescription(cmd),
-    );
-  });
+  const commandList = helper
+    .visibleCommands(cmd)
+    .filter((cmd) => cmd.name() !== "help")
+    .map((cmd) => {
+      return formatItem(
+        helper.subcommandTerm(cmd),
+        sanitizeHtml(helper.subcommandDescription(cmd)),
+      );
+    });
   if (commandList.length > 0) {
     output = output.concat([
       `\n${subsectionPrefix} Commands:`,
@@ -144,3 +215,11 @@ export const formatHelpAsMarkdown = (
 
   return output.join("\n");
 };
+
+const sanitizeHtml = (t: string) =>
+  (t || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");

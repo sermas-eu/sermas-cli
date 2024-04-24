@@ -6,6 +6,7 @@ import * as path from "path";
 import { CliApi } from "./libs/api/api.cli";
 import { CliConfigHandler } from "./libs/api/config";
 import { CliCredentialsHandler } from "./libs/api/credentials";
+import { generateDocs } from "./libs/docs";
 import {
   CliCommand,
   CliCommandLeaf,
@@ -13,7 +14,6 @@ import {
   CommandParams,
   PromptQuestion,
 } from "./libs/dto/cli.dto";
-import { formatHelpAsMarkdown } from "./libs/help";
 import logger from "./libs/logger";
 import { FileFormatType, toData, toJSON } from "./libs/util";
 
@@ -130,89 +130,10 @@ export class CliProgram {
       .command("docs-gen")
       .description("generate markdown documentation")
       .action(async () => {
-        const docs: Record<string, string> = {};
-
-        const traverse = async (cmd: Command, parent?: string[]) => {
-          const isRoot = parent === undefined;
-          parent = isRoot ? [cmd.name()] : parent;
-          const cmdName = [...parent].join("--");
-
-          const help = formatHelpAsMarkdown(cmd, cmd.createHelp(), {
-            anchor: isRoot ? undefined : cmdName,
-          });
-
-          // console.log(`parent ${parent.join(" -> ")}`);
-          // console.log(`cmd ${cmdName}`);
-
-          await Promise.all(
-            cmd.commands.map((c) => {
-              return traverse(c, [...parent, c.name()]);
-            }),
-          );
-
-          docs[cmdName] = help;
-        };
-
-        await traverse(program);
-
-        // await fs.rmdir("./docs", { recursive: true });
         await fs.mkdir("./docs", { recursive: true });
         const filename = `./docs/${program.name()}.md`;
-        await fs.writeFile(filename, "");
-
-        const keys = Object.keys(docs).sort();
-
-        const tocTree: Record<string, any> = {};
-        keys.forEach((key) => {
-          const baseCommand = key.replace(program.name(), "");
-          if (!baseCommand.length) {
-            tocTree[""] = {
-              group: `- <a href="#${key}">SERMAS CLI overview</a>\n`,
-            };
-            return;
-          }
-
-          const parts = baseCommand.split("--").slice(1);
-          const current = parts.shift();
-          const isGroup = parts.length === 0;
-
-          const title = docs[key].split("\n")[1];
-          const matches = title.split("</a>");
-
-          const label =
-            matches.length == 2 ? matches.pop() : key.replace("--", " ");
-
-          const markdown = `- <a href="#${key}">${label}</a>\n`;
-
-          tocTree[current] = tocTree[current] || {
-            group: "",
-            commands: [],
-          };
-          if (isGroup) {
-            tocTree[current].group = markdown;
-          } else {
-            tocTree[current].commands = tocTree[current].commands || [];
-            tocTree[current].commands.push(`  ${markdown}`);
-          }
-        });
-
-        const toc = Object.keys(tocTree)
-          .map((groupKey) => {
-            return [
-              tocTree[groupKey].group,
-              (tocTree[groupKey].commands || []).join("\n"),
-            ].join("\n");
-          })
-          .join("");
-        await fs.appendFile(filename, toc);
-
-        await Promise.all(
-          keys.map((key) => {
-            return fs.appendFile(filename, docs[key]);
-          }),
-        );
-
-        // process.exit();
+        const output = generateDocs(program);
+        await fs.writeFile(filename, output);
       });
 
     program

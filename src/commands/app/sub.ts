@@ -71,7 +71,7 @@ export default {
           return fail(`[${appId}] MQTT error: ${e.stack}`);
         }
 
-        if (client === null) return fail();
+        if (client === null) return fail("Failed to initialize client");
 
         clients[appId] = client;
 

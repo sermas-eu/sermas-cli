@@ -18,7 +18,7 @@ import {
 export const BASE_URL = process.env.BASE_URL || "http://localhost:8080";
 
 export class BaseApi {
-  private readonly apiClient: SermasApiClient;
+  protected readonly apiClient: SermasApiClient;
 
   constructor(
     protected readonly clientId: string,

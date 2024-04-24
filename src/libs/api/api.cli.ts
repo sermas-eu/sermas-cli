@@ -32,7 +32,7 @@ export class CliApi extends BaseApi {
       await this.credentials.save(appId, credentials);
     }
 
-    api.getClient().setToken(credentials);
+    if (credentials) api.getClient()?.setToken(credentials);
 
     return api;
   }

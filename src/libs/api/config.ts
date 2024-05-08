@@ -16,7 +16,7 @@ export class CliConfigHandler {
     } catch {
     } finally {
       this.config = res || {};
-      return this.config[domain];
+      return this.config[domain] || {};
     }
   }
 

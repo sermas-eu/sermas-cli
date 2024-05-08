@@ -248,7 +248,10 @@ export class CliProgram {
                 await this.cliApi.loadToken();
                 let params = await getParams();
 
-                if (!params.config?.auth?.username) {
+                if (
+                  params.command.name() !== "login" &&
+                  !params.config?.auth?.username
+                ) {
                   logger.info(`Login is missing`);
                   await LoginCmd.run({
                     args: [],

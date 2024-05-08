@@ -2,6 +2,7 @@ import { Command, Option } from "commander";
 import * as fs from "fs/promises";
 import { glob } from "glob";
 import inquirer, { Answers } from "inquirer";
+import { homedir } from "os";
 import * as path from "path";
 import { CliApi } from "./libs/api/api.cli";
 import { CliConfigHandler } from "./libs/api/config";
@@ -17,7 +18,10 @@ import {
 import logger from "./libs/logger";
 import { FileFormatType, toData, toJSON } from "./libs/util";
 
-const configDir = process.env.CONFIG_DIR || path.resolve(__dirname, "../");
+import LoginCmd from "./commands/auth/login";
+
+const baseUrl = process.env.BASE_URL || "http://localhost:8080";
+const configDir = process.env.CONFIG_DIR || path.resolve(homedir(), ".sermas");
 
 const credentialsFile = path.resolve(configDir, `credentials.json`);
 const cliConfigFile = path.resolve(configDir, `cli.json`);
@@ -32,7 +36,7 @@ export class CliProgram {
     credentialsFile,
   );
 
-  private readonly cliApi = new CliApi(this.config, this.credentials);
+  private readonly cliApi = new CliApi(this.config, this.credentials, baseUrl);
 
   constructor() {}
 
@@ -43,6 +47,9 @@ export class CliProgram {
 
     const CLI_NAME = "sermas-cli";
     const CLI_VERSION = pkg.version;
+
+    logger.debug(`Ensuring config path exists at ${configDir}`);
+    await fs.mkdir(configDir, { recursive: true });
 
     const program = new Command();
     program
@@ -216,7 +223,7 @@ export class CliProgram {
             const getParams = async (): Promise<CommandParams> => ({
               program: param.program,
               command,
-              config: await this.config.loadConfig(),
+              config: await this.config.loadConfig(baseUrl),
               args: command.args || [],
               flags: command.opts() || {},
               api: this.cliApi,
@@ -239,7 +246,25 @@ export class CliProgram {
               const formatOutput: FileFormatType = param.program.opts().output;
               try {
                 await this.cliApi.loadToken();
-                const params = await getParams();
+                let params = await getParams();
+
+                if (!params.config?.auth?.username) {
+                  logger.info(`Login is missing`);
+                  await LoginCmd.run({
+                    args: [],
+                    config: {},
+                    flags: {},
+                    feature: params.feature,
+                    api: params.api,
+                    command: params.command,
+                    program: params.program,
+                  });
+
+                  // reload
+                  await this.cliApi.loadToken();
+                  params = await getParams();
+                }
+
                 const output = await cliCommand.run(params);
                 if (output && formatOutput) {
                   console.log(

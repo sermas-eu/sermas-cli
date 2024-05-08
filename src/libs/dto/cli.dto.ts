@@ -1,7 +1,12 @@
+import { LoginResponseDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { Answers, Question } from "inquirer";
 import { CliApi } from "../api/api.cli";
-import { LoginResponseDto } from "@sermas/api-client";
+
+export type CliInstanceCredentialsCollection = Record<
+  string,
+  CliCredentialsCollection
+>;
 
 export interface CliCredentialsCollection
   extends Record<string, LoginResponseDto> {
@@ -22,6 +27,8 @@ export interface CommandParams extends Record<string, Record<string, any>> {
   program: Command;
   api: CliApi;
 }
+
+export type CliInstanceConfig = Record<string, CliConfig>;
 
 export interface CliConfig extends Record<string, any> {
   auth?: {

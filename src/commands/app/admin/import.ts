@@ -1,10 +1,11 @@
-import { saveAppFromDirectory } from "../../../libs/app/save";
-import { CommandParams } from "../../../libs/dto/cli.dto";
-import logger from "../../../libs/logger";
 import { PlatformAppDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { glob } from "glob";
 import * as path from "path";
+import { saveAppFromDirectory } from "../../../libs/app/save";
+import { CommandParams } from "../../../libs/dto/cli.dto";
+import logger from "../../../libs/logger";
+import { fail } from "../../../libs/util";
 
 export default {
   setup: async (command: Command) => {

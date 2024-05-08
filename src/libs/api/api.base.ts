@@ -15,8 +15,6 @@ import {
   UIAssetDto,
 } from "@sermas/api-client";
 
-export const BASE_URL = process.env.BASE_URL || "http://localhost:8080";
-
 export class BaseApi {
   protected readonly apiClient: SermasApiClient;
 
@@ -24,7 +22,7 @@ export class BaseApi {
     protected readonly clientId: string,
     protected readonly config: CliConfigHandler,
     protected readonly credentials: CliCredentialsHandler,
-    protected readonly baseUrl = BASE_URL,
+    protected readonly baseUrl,
   ) {
     this.apiClient = new SermasApiClient({
       baseURL: this.baseUrl,
@@ -37,7 +35,7 @@ export class BaseApi {
   }
 
   async getToken() {
-    const credentials = await this.credentials.get(this.clientId);
+    const credentials = await this.credentials.get(this.baseUrl, this.clientId);
     // logger.debug(`[${this.clientId}] Token ${credentials?.access_token}`);
     return credentials?.access_token || null;
   }
@@ -45,11 +43,11 @@ export class BaseApi {
   async loadToken() {
     logger.verbose(`Loading token`);
     // load local credentials
-    const credentials = await this.credentials.get(this.clientId);
+    const credentials = await this.credentials.get(this.baseUrl, this.clientId);
 
     // no credentials, try login if params are avail
     if (!credentials?.access_token) {
-      const config = await this.config.loadConfig();
+      const config = await this.config.loadConfig(this.baseUrl);
       if (config && config.auth?.username && config.auth?.password) {
         logger.debug(`Attempting login for ${config.auth?.username}`);
         const data = await this.login({
@@ -63,7 +61,7 @@ export class BaseApi {
         }
 
         logger.debug(`Updating credentials for ${config.auth?.username}`);
-        await this.credentials.save("user", data);
+        await this.credentials.save(this.baseUrl, "user", data);
 
         await this.apiClient.setToken(data);
         return data?.access_token || null;
@@ -81,7 +79,7 @@ export class BaseApi {
       logger.debug("Token is expired");
       const res = await this.refreshToken();
       if (res === null) {
-        await this.credentials.remove(this.clientId);
+        await this.credentials.remove(this.baseUrl, this.clientId);
         return await this.loadToken();
       }
     }
@@ -119,7 +117,7 @@ export class BaseApi {
 
   async refreshToken() {
     const client = this.getClient();
-    const credentials = await this.credentials.get(this.clientId);
+    const credentials = await this.credentials.get(this.baseUrl, this.clientId);
     if (!credentials) return null;
 
     const tokenInfo = await this.getTokenInfo();
@@ -135,7 +133,7 @@ export class BaseApi {
         },
       });
 
-      await this.credentials.save(this.clientId, res);
+      await this.credentials.save(this.baseUrl, this.clientId, res);
       return res;
     } catch (e: any) {
       logger.warn(`Failed to refresh token: ${e.message}`);

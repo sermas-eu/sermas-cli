@@ -11,6 +11,7 @@ import {
   LoginRequestDto,
   PlatformAppDto,
   PlatformAppExportFilterDto,
+  RegistrationRequestDto,
   SermasApiClient,
   UIAssetDto,
 } from "@sermas/api-client";
@@ -285,5 +286,13 @@ export class BaseApi {
       ...model,
       file,
     };
+  }
+
+  async importUsers(users: RegistrationRequestDto[]) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.authentication.importUsers({
+        requestBody: users,
+      }),
+    );
   }
 }

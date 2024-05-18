@@ -88,7 +88,7 @@ export const loadAppStructure = async (basepath: string) => {
   }
 
   const tools = await loadDataFile<AppToolsDTO[]>(`${basepath}/tools`);
-  if (modules) {
+  if (tools) {
     appStructure.tools = tools;
   }
 

@@ -6,6 +6,7 @@ import {
   AppSettingsDto,
   AppToolsDTO,
   AppUserDto,
+  DialogueTaskDto,
   PlatformAppDto,
   RepositoryConfigDto,
 } from "@sermas/api-client";
@@ -20,6 +21,7 @@ export type AppStructure = {
   modules?: AppModuleConfigDto[];
   settings?: AppSettingsDto;
   tools?: AppToolsDTO[];
+  tasks?: DialogueTaskDto[];
   users?: AppUserDto[];
   repository?: RepositoryConfigDto;
   files?: RepositoryFiles;
@@ -57,6 +59,16 @@ export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
   }
   app.tools = tools;
 
+  const tasks = appStructure.tasks ? [...appStructure.tasks] : [];
+  if (app.tasks) {
+    app.tasks.forEach((task) => {
+      // keep from structure
+      if (tasks.filter((t) => t.name === task.name).length) return;
+      tasks.push(task);
+    });
+  }
+  app.tasks = tasks;
+
   app.repository = appStructure.repository || undefined;
 
   return app;
@@ -90,6 +102,11 @@ export const loadAppStructure = async (basepath: string) => {
   const tools = await loadDataFile<AppToolsDTO[]>(`${basepath}/tools`);
   if (tools) {
     appStructure.tools = tools;
+  }
+
+  const tasks = await loadDataFile<DialogueTaskDto[]>(`${basepath}/tasks`);
+  if (tasks) {
+    appStructure.tasks = tasks;
   }
 
   const users = await loadDataFile<AppUserDto[]>(`${basepath}/users`);

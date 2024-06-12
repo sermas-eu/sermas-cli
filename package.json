@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/sermas-eu/sermas-cli.git"
   },
-  "version": "1.0.0-alpha.31",
+  "version": "1.0.0-alpha.32",
   "type": "commonjs",
   "description": "Sermas CLI",
   "main": "dist/index.js",

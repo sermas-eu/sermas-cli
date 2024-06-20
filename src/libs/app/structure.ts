@@ -8,6 +8,7 @@ import {
   AppUserDto,
   DialogueTaskDto,
   PlatformAppDto,
+  RagDocumentsDto,
   RepositoryConfigDto,
 } from "@sermas/api-client";
 import * as fs from "fs/promises";
@@ -25,6 +26,7 @@ export type AppStructure = {
   users?: AppUserDto[];
   repository?: RepositoryConfigDto;
   files?: RepositoryFiles;
+  rag?: RagDocumentsDto;
 };
 
 export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
@@ -71,6 +73,8 @@ export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
 
   app.repository = appStructure.repository || undefined;
 
+  app.rag = appStructure.app.rag;
+
   return app;
 };
 
@@ -112,6 +116,11 @@ export const loadAppStructure = async (basepath: string) => {
   const users = await loadDataFile<AppUserDto[]>(`${basepath}/users`);
   if (modules) {
     appStructure.users = users;
+  }
+
+  const rag = await loadDataFile<RagDocumentsDto>(`${basepath}/rag`);
+  if (rag) {
+    appStructure.rag = rag;
   }
 
   const { repository, files } = await scanRepository(basepath);

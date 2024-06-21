@@ -12,11 +12,12 @@ export const saveAppFromDirectory = async (data: {
   api: CliApi;
   saveApp?: (app: PlatformAppDto) => Promise<any>;
   skipUpload?: boolean;
+  importWebsites?: boolean;
 }) => {
-  const { filepath, jwt, api, skipUpload } = data;
+  const { filepath, jwt, api, skipUpload, importWebsites } = data;
 
   const appStructure = await loadAppStructure(filepath);
-  const app = structureToApp(appStructure);
+  const app = structureToApp(appStructure, importWebsites);
 
   app.ownerId = app.ownerId || jwt.sub;
 

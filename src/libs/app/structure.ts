@@ -29,7 +29,10 @@ export type AppStructure = {
   rag?: RagDocumentsDto;
 };
 
-export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
+export const structureToApp = (
+  appStructure: AppStructure,
+  importWebsites?: boolean,
+): PlatformAppDto => {
   const app: PlatformAppDto = ({ ...appStructure.app } || {}) as PlatformAppDto;
 
   app.appId = appStructure.appId || app.appId || undefined;
@@ -73,7 +76,9 @@ export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
 
   app.repository = appStructure.repository || undefined;
 
-  app.rag = appStructure.app.rag;
+  if (!importWebsites) {
+    delete app.rag;
+  }
 
   return app;
 };

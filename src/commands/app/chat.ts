@@ -76,10 +76,14 @@ export default {
 
       messages.splice(0, messages.length);
 
-      logger.info(`[agent] ${fullMessage}`);
+      logger.info(`[agent] \n${fullMessage}\n`);
     };
 
+    let waitLock = false;
     const waitAnswer = async () => {
+      if (waitLock) return;
+      waitLock = true;
+
       // sleep for the slooowy tools
       await sleep(2000);
       logger.debug(`Waiting for response...`);
@@ -102,7 +106,10 @@ export default {
         lastMessage = messages.length;
       }
       showAnswer();
+      waitLock = false;
     };
+
+    setInterval(waitAnswer, 2000);
 
     const sendChat = async (text: string) => {
       const res = await appApi.sendChatMessage({
@@ -132,8 +139,6 @@ export default {
       if (answers.message && answers.message.length > 0) {
         await sendChat(answers.message);
       }
-
-      await waitAnswer();
     }
   },
 };

@@ -172,7 +172,7 @@ export class BaseApi {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.platform.getClientAccessToken({
         requestBody: {
-          clientId: "application",
+          clientId: `application`,
           appId,
         },
       }),

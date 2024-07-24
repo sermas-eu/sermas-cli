@@ -6,7 +6,7 @@ import { fail } from "../../libs/util";
 export default {
   setup: async (command: Command) => {
     command
-      .description("Retrieve a chat history by session ID")
+      .description("Retrieve a chat history by app ID")
       .argument("[appId]", `The appId reference`);
   },
 
@@ -31,8 +31,6 @@ export default {
         limit: 10,
       },
     });
-
-    console.warn(list);
 
     logger.info(`Created\t\t\tStatus\tsessionId`);
     list.forEach((session) => {

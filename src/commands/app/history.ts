@@ -12,7 +12,7 @@ export default {
       .argument("[sessionId]", `The sessionId to retrieve`);
   },
 
-  run: async ({ args, config, feature, flags, api }: CommandParams) => {
+  run: async ({ args, api }: CommandParams) => {
     const [appId, sessionId] = args;
 
     if (!appId) {
@@ -36,12 +36,12 @@ export default {
       const color =
         (message.role as any) === "user" ? colors.white.bold : colors.cyan.bold;
 
-      console.warn(message);
+      // console.warn(message);
+
       if (message.type !== undefined && message.type !== "message") {
-        // console.log(
-        //   colors.magenta.italic(`[${message.type}] ${message.content}`) +
-        //     colors.reset,
-        // );
+        console.log(
+          colors.magenta.italic(`[${message.type}] ${message.content}`),
+        );
         continue;
       }
 

@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
 import { fail } from "../../libs/util";
 
 import colors from "cli-color";
@@ -37,7 +36,16 @@ export default {
       const color =
         (message.role as any) === "user" ? colors.white.bold : colors.cyan.bold;
 
-      logger.info(`${color(message.role)}: ${message.content}`);
+      console.warn(message);
+      if (message.type !== undefined && message.type !== "message") {
+        // console.log(
+        //   colors.magenta.italic(`[${message.type}] ${message.content}`) +
+        //     colors.reset,
+        // );
+        continue;
+      }
+
+      console.log(`${color(message.role)}: ${message.content}`);
     }
 
     return history;

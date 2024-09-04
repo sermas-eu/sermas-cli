@@ -83,7 +83,7 @@ export default {
     if (!flags.dump) {
       logger.info(`Created\t\t\tStatus\tsessionId`);
     } else {
-      const dumpPath = path.resolve(flags.dump);
+      const dumpPath = path.resolve(`${flags.dump}/${appId}`);
       try {
         if (!(await fileExists(dumpPath))) {
           await mkdir(dumpPath, { recursive: true });
@@ -103,7 +103,7 @@ export default {
 
       if (flags.dump) {
         const filepath = path.resolve(
-          `${flags.dump}/${session.sessionId}.yaml`,
+          `${flags.dump}/${session.appId}/${session.sessionId}.yaml`,
         );
 
         logger.debug(`Saving ${filepath}`);
@@ -123,9 +123,14 @@ export default {
         };
 
         await saveFile(filepath, output);
-        logger.info("------------");
+        if (flags.print)
+          logger.info(
+            "\n------------------------------------------------------------",
+          );
       }
     }
+
+    logger.info(`Found ${list.length} sessions`);
 
     return list;
   },

@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { CommandParams } from "../../libs/dto/cli.dto";
 import { fail } from "../../libs/util";
 
-import colors from "cli-color";
+import { formatHistory } from "../../libs/history";
 
 export default {
   setup: async (command: Command) => {
@@ -32,21 +32,7 @@ export default {
       sessionId,
     });
 
-    for (const message of history) {
-      const color =
-        (message.role as any) === "user" ? colors.white.bold : colors.cyan.bold;
-
-      // console.warn(message);
-
-      if (message.type !== undefined && message.type !== "message") {
-        console.log(
-          colors.magenta.italic(`[${message.type}] ${message.content}`),
-        );
-        continue;
-      }
-
-      console.log(`${color(message.role)}: ${message.content}`);
-    }
+    formatHistory(history, true);
 
     return history;
   },

@@ -28,6 +28,11 @@ export default {
         "history format (raw or simple). Default to simple",
         "simple",
       )
+      .option(
+        "-s, --skip-empty",
+        "skip empty session, where the user has not interacted. default true",
+        true,
+      )
       .option("-p, --print", "print history to screen", false);
   },
 
@@ -102,8 +107,11 @@ export default {
       );
 
       if (flags.dump) {
+        const dateLabel = new Date(session.createdAt)
+          .toISOString()
+          .split(".")[0];
         const filepath = path.resolve(
-          `${flags.dump}/${session.appId}/${session.sessionId}.yaml`,
+          `${flags.dump}/${session.appId}/${dateLabel}-${session.sessionId}.yaml`,
         );
 
         logger.debug(`Saving ${filepath}`);
@@ -113,6 +121,13 @@ export default {
         });
 
         const messages = formatHistory(history, flags.print);
+
+        if (flags.skipEmpty) {
+          if (messages.length === 1) {
+            logger.warn(`Skip empty session sessionId=${session.sessionId}`);
+            continue;
+          }
+        }
 
         const output: any = {
           appId: session.appId,

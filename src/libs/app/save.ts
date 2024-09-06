@@ -1,7 +1,11 @@
+import {
+  PlatformAppDto,
+  RepositoryAssetTypes,
+  UIAssetDto,
+} from "@sermas/api-client";
+import { lookup } from "mime-types";
 import { CliApi } from "../../libs/api/api.cli";
 import { KeycloakJwtTokenDto } from "../../libs/dto/keycloak.dto";
-import { PlatformAppDto, RepositoryAssetTypes } from "@sermas/api-client";
-import { lookup } from "mime-types";
 import logger from "../../libs/logger";
 import { readFile } from "../../libs/util";
 import { loadAppStructure, saveAppId, structureToApp } from "./structure";
@@ -53,14 +57,17 @@ export const saveAppFromDirectory = async (data: {
 
         const filename = appStructure.files[type][assetId];
         logger.info(`Uploading ${type} ${assetId} (${filename})`);
+
+        const payload: Partial<UIAssetDto> & { appId: string } = {
+          appId: appId,
+          filename: asset.path,
+          metadata: asset.metadata || {},
+          type: type as RepositoryAssetTypes,
+          ts: new Date().toString(),
+        };
+
         await api.saveAsset(
-          {
-            appId,
-            filename: asset.path,
-            metadata: {},
-            type: type as RepositoryAssetTypes,
-            ts: new Date().toString(),
-          },
+          payload,
           new Blob([await readFile(filename)], {
             type: lookup(filename),
           }),

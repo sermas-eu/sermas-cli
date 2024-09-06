@@ -23,6 +23,7 @@ export default {
         "-d, --dump [path]",
         "Export session contents as yaml files to path",
       )
+      .option("-s, --stats", "Export also stats as yaml, depends on --dump")
       .option(
         "-f, --dump-format [format]",
         "history format (raw or simple). Default to simple",
@@ -75,7 +76,7 @@ export default {
         requestBody: {
           query,
           sort: {
-            createdAt: "desc",
+            createdAt: "asc",
           },
           limit,
         },
@@ -110,11 +111,45 @@ export default {
         const dateLabel = new Date(session.createdAt)
           .toISOString()
           .split(".")[0];
-        const filepath = path.resolve(
+
+        const messagesFilepath = path.resolve(
           `${flags.dump}/${session.appId}/${dateLabel}-${session.sessionId}.yaml`,
         );
 
-        logger.debug(`Saving ${filepath}`);
+        if (flags.stats) {
+          const statsFilepath = path.resolve(
+            `${flags.dump}/${session.appId}/${dateLabel}-${session.sessionId}-stats.yaml`,
+          );
+
+          const stats = await appApiClient.api.platform.monitoringSearch({
+            requestBody: {
+              appId: session.appId,
+              sessionId: session.sessionId,
+            },
+          });
+
+          const output = [];
+          for (const record of stats) {
+            output.push({
+              type: record.type,
+              label: record.label,
+              ts: record.ts,
+            });
+          }
+          if (output.length) {
+            await saveFile(statsFilepath, {
+              appId: session.appId,
+              sessionId: session.sessionId,
+              createdAt: session.createdAt,
+              closedAt: session.closedAt,
+              stats: output,
+            });
+          } else {
+            logger.info(`Skip stats, no records found`);
+          }
+        }
+
+        logger.debug(`Saving messages ${messagesFilepath}`);
 
         const history = await appApiClient.api.dialogue.getChatHistory({
           sessionId: session.sessionId,
@@ -137,7 +172,7 @@ export default {
           history: flags.dumpFormat === "simple" ? messages : history,
         };
 
-        await saveFile(filepath, output);
+        await saveFile(messagesFilepath, output);
         if (flags.print)
           logger.info(
             "\n------------------------------------------------------------",

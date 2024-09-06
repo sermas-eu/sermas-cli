@@ -166,8 +166,9 @@ export const scanRepository = async (basepath: string) => {
     }
 
     for (const assetPath of assets) {
-      const metadata =
+      let metadata =
         handler.skipMetadata !== false ? await loadMetadata(assetPath) : {};
+      metadata = metadata || {};
 
       const assetRelativePath = assetPath.replace(
         `${repositoryPath}/${handlerType}/`,

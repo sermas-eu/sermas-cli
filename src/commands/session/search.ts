@@ -100,6 +100,7 @@ export default {
       }
     }
 
+    const exported: SessionDto[] = [];
     for (const session of list) {
       logger.info(
         `${new Date(session.createdAt).toISOString().split(".")[0]}\t${
@@ -116,6 +117,23 @@ export default {
           `${flags.dump}/${session.appId}/${dateLabel}-${session.sessionId}.yaml`,
         );
 
+        logger.debug(`Saving messages ${messagesFilepath}`);
+
+        const history = await appApiClient.api.dialogue.getChatHistory({
+          sessionId: session.sessionId,
+        });
+
+        const messages = formatHistory(history, flags.print);
+
+        // skip empty sessions
+        if (flags.skipEmpty) {
+          if (messages.length === 1) {
+            logger.debug(`Skip empty session sessionId=${session.sessionId}`);
+            continue;
+          }
+        }
+
+        // export stats
         if (flags.stats) {
           const statsFilepath = path.resolve(
             `${flags.dump}/${session.appId}/${dateLabel}-${session.sessionId}-stats.yaml`,
@@ -149,21 +167,6 @@ export default {
           }
         }
 
-        logger.debug(`Saving messages ${messagesFilepath}`);
-
-        const history = await appApiClient.api.dialogue.getChatHistory({
-          sessionId: session.sessionId,
-        });
-
-        const messages = formatHistory(history, flags.print);
-
-        if (flags.skipEmpty) {
-          if (messages.length === 1) {
-            logger.warn(`Skip empty session sessionId=${session.sessionId}`);
-            continue;
-          }
-        }
-
         const output: any = {
           appId: session.appId,
           sessionId: session.sessionId,
@@ -173,6 +176,9 @@ export default {
         };
 
         await saveFile(messagesFilepath, output);
+
+        exported.push(session);
+
         if (flags.print)
           logger.info(
             "\n------------------------------------------------------------",
@@ -180,8 +186,8 @@ export default {
       }
     }
 
-    logger.info(`Found ${list.length} sessions`);
+    logger.info(`Found ${exported.length} sessions`);
 
-    return list;
+    return exported;
   },
 };

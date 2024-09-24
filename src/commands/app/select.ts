@@ -17,7 +17,7 @@ export default {
     if (apps === null) return fail(`Failed to load apps`);
     if (!apps.length) {
       return quit(
-        `No applications found. Create an application with 'cli app create'`,
+        `No applications found. Create an application with 'cli app init'`,
       );
     }
 

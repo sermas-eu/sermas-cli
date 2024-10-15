@@ -205,7 +205,6 @@ export class CliProgram {
         await Promise.all(
           param.leaf.commands.map(async (cmd) => {
             const cmdName = cmd.replace(this.fileExt, "");
-
             if (cmdName === "default") {
               return;
             }
@@ -225,7 +224,7 @@ export class CliProgram {
               command,
               config: await this.config.loadConfig(baseUrl),
               args: command.args || [],
-              flags: command.opts() || {},
+              flags: command.optsWithGlobals() || {},
               api: this.cliApi,
               feature: {
                 prompt: async (

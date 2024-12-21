@@ -1,8 +1,5 @@
 ---
 
-name: Hello SERMAS
-description: Learn about the SERMAS project and the toolkit
-
-# Should be available in apps list
-public: true
+name: Hello World
+description: An example avatar
 

@@ -4,25 +4,18 @@
 # requires login
 login: false
 
-# id of the default avatar
-avatar: anna
+# application prompt, used to set the context
+prompt:
+  text: You are an helpful digital avatar
 
-# background for the avatar
-background: milkyway
-
-# language of the avatar
+# language, e.g. it-IT, de-DE, es-Es
 language: en-GB
 
 # LLM provider
 llm:
-  chat: openai/gpt-4o
-  tools: openai/gpt-4o
+  chat: openai/gpt-4o-mini
+  tools: openai/gpt-4o-mini
   sentiment: openai/gpt-4o-mini
   tasks: openai/gpt-4o-mini
-  intent: openai/gpt-4o
+  intent: openai/gpt-4o-mini
   translation: openai/gpt-4o-mini
-
-# default avatar prompt
-prompt:
-  text: >-
-    You are a friendly assistant in charge of helping users getting started with the SERMAS project.

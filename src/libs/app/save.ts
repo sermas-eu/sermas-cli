@@ -3,7 +3,9 @@ import {
   RepositoryAssetTypes,
   UIAssetDto,
 } from "@sermas/api-client";
+import * as fs from "fs/promises";
 import { lookup } from "mime-types";
+import * as path from "path";
 import { CliApi } from "../../libs/api/api.cli";
 import { KeycloakJwtTokenDto } from "../../libs/dto/keycloak.dto";
 import logger from "../../libs/logger";
@@ -29,11 +31,36 @@ export const saveAppFromDirectory = async (data: {
   logger.debug(JSON.stringify(app, null, 2));
 
   let res: PlatformAppDto;
+
   if (data.saveApp) {
     res = await data.saveApp(app);
   } else {
-    res = app.appId ? await api.updateApp(app) : await api.createApp(app);
+    if (app.appId) {
+      const savedApp = await api.loadApp(app.appId);
+      if (savedApp === null) {
+        logger.info(`app id=${app.appId} not found, recreating`);
+        const appLockFile = path.resolve(filepath, "appId");
+        try {
+          await fs.unlink(appLockFile);
+          app.appId = undefined;
+        } catch (e) {
+          logger.warn(`Cannot remove app lock at ${appLockFile}: ${e.message}`);
+        }
+      }
+    }
+
+    if (app.appId) {
+      res = await api.updateApp(app);
+      if (!res) {
+        logger.info(
+          `If the app does not exists or has been removed, try removing the file .appId and try again`,
+        );
+      }
+    } else {
+      res = await api.createApp(app);
+    }
   }
+
   if (!res) return;
 
   const appId = res.appId;

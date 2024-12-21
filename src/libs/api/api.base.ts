@@ -191,6 +191,12 @@ export class BaseApi {
     );
   }
 
+  async loadApp(appId: string) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.platform.readApp({ appId }),
+    );
+  }
+
   async importApps(requestBody: PlatformAppDto[], skipClients?: boolean) {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.platform.importApps({

@@ -232,7 +232,7 @@ export class Browser {
         newMessage !== lastMessage &&
         !newMessage.includes(sentence)
       ) {
-        if (extraWait) {
+        if (extraWait > 0) {
           // If the message is partially streamed
           await sleep(extraWait);
           newMessage = await this.getLastMessage();

@@ -155,10 +155,31 @@ export class Browser {
   /**
    * Accept agreement, disable mic and audio
    */
-  async initSession(): Promise<void> {
+  async initSession(loginToAsa: boolean = false): Promise<void> {
     await this.acceptInitialAgreements();
+    if (loginToAsa) {
+      await this.loginToAsa();
+    }
     await this.disableMic();
     await this.disableSound();
+  }
+
+  /**
+   * Login to ASA app
+   */
+  async loginToAsa(): Promise<void> {
+    await this.select({
+      xpath: '//input[@name="username"]',
+    });
+    await this.click();
+    await this.write("admin");
+    await this.select({
+      xpath: '//input[@name="password"]',
+    });
+    await this.click();
+    await this.write("admin");
+    await this.select({ text: "Login" });
+    await this.click();
   }
 
   /**
@@ -223,7 +244,7 @@ export class Browser {
     await this.select({ text: "Send" });
     await this.click();
     let newMessage: string;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       // wait for reply
       await sleep(250);
       newMessage = await this.getLastMessage();
@@ -232,14 +253,21 @@ export class Browser {
         newMessage !== lastMessage &&
         !newMessage.includes(sentence)
       ) {
-        if (extraWait > 0) {
-          // If the message is partially streamed
-          await sleep(extraWait);
-          newMessage = await this.getLastMessage();
-        }
         break;
       }
     }
-    return newMessage;
+    if (extraWait > 0) {
+      // If the message is partially streamed
+      await sleep(extraWait);
+      newMessage = await this.getLastMessage();
+    }
+    if (
+      newMessage &&
+      newMessage !== lastMessage &&
+      !newMessage.includes(sentence)
+    ) {
+      return newMessage;
+    }
+    return "";
   }
 }

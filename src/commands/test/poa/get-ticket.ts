@@ -10,7 +10,7 @@ export default {
 
   run: async ({ args, flags, feature, api }: CommandParams) => {
     const baseUrl = flags.baseurl || "http://localhost:8080";
-    const pace = parseInt(flags.pace) || 1000;
+    const pace = parseInt(flags.pace) || 0;
     const browser: Browser = new Browser(`${baseUrl}/poa`, pace);
     let reply: string;
     let ticketImageFound: boolean = false;

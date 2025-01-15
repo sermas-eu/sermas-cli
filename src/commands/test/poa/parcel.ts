@@ -5,7 +5,7 @@ import { CommandParams } from "../../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
-    command.description("Say hello to Emma");
+    command.description("start mailing a parcel");
   },
 
   run: async ({ flags }: CommandParams) => {

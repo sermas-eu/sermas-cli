@@ -5,10 +5,10 @@ import { CommandParams } from "../../../libs/dto/cli.dto";
 
 export default {
   setup: async (command: Command) => {
-    command.description("Say hello to Emma");
+    command.description("ask for a ticket");
   },
 
-  run: async ({ args, flags, feature, api }: CommandParams) => {
+  run: async ({ flags }: CommandParams) => {
     const baseUrl = flags.baseUrl;
     const pace = parseInt(flags.pace);
     const browser: Browser = new Browser(`${baseUrl}/poa`, pace);

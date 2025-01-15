@@ -2,10 +2,18 @@ import { sleep } from "@sermas/api-client";
 import { WebDriver, Builder, By, WebElement } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 
+export type Selector = {
+  text?: string;
+  contains?: string;
+  id?: string;
+  xpath?: string;
+};
+
 export class Browser {
   private webdriver: WebDriver;
   private baseUrl: string;
   private pace: number;
+  private defaultMaxWait: number;
   selectedElement: WebElement | null = null;
 
   /**
@@ -14,6 +22,7 @@ export class Browser {
    * Expose a simple interface to interact with the browser.
    *
    * @param baseUrl - base URL of the web application to be tested
+   * @param pace - sleep after each browser action, in ms. This helps for visual debugging
    * @param maxWait - max time in seconds to wait for a selected element to appear on page
    *                  before throwing and exception
    */
@@ -32,7 +41,8 @@ export class Browser {
 
     this.baseUrl = baseUrl;
     this.pace = pace;
-    this.webdriver.manage().setTimeouts({ implicit: maxWait * 1000 }); // Convert to milliseconds
+    this.defaultMaxWait = maxWait * 1000; // Convert to milliseconds
+    this.webdriver.manage().setTimeouts({ implicit: this.defaultMaxWait });
     this.webdriver.manage().window().maximize();
     this.webdriver.get(this.baseUrl);
     sleep(this.pace);
@@ -42,6 +52,10 @@ export class Browser {
     return Boolean(this.selectedElement);
   }
 
+  /**
+   * Get the specified attribute of the selected element
+   * @param name - attribute name
+   */
   async getAttribute(name: string): Promise<string | null> {
     if (!this.selectedElement) {
       return null;
@@ -55,19 +69,11 @@ export class Browser {
    * It accepts only one selector. If multiple elements are matched, only the first one is selected.
    *
    * @param params - Object containing one of: text, contains, id, or xpath
-   * @returns The browser instance. Matched element can be manipulated by subsequent method calls
    */
-  async select({
-    text,
-    contains,
-    id,
-    xpath,
-  }: {
-    text?: string;
-    contains?: string;
-    id?: string;
-    xpath?: string;
-  }): Promise<Browser> {
+  async select(
+    { text, contains, id, xpath }: Selector,
+    customWait: number | null = null,
+  ): Promise<void> {
     this.selectedElement = null;
 
     const selectorCount = [text, contains, id, xpath].filter(Boolean).length;
@@ -75,54 +81,66 @@ export class Browser {
       throw new Error("Specify one selector: text, contains, id or xpath");
     }
 
+    if (customWait)
+      this.webdriver.manage().setTimeouts({ implicit: customWait });
+
     let element: WebElement;
 
-    if (text) {
-      element = await this.webdriver.findElement(
-        By.xpath(`//*[text()='${text}']`),
-      );
-    } else if (contains) {
-      element = await this.webdriver.findElement(
-        By.xpath(`//*[contains(., '${contains}')]`),
-      );
-    } else if (id) {
-      element = await this.webdriver.findElement(By.id(id));
-    } else if (xpath) {
-      element = await this.webdriver.findElement(By.xpath(xpath));
-    } else {
-      throw new Error("No valid selector provided");
-    }
+    try {
+      if (text) {
+        element = await this.webdriver.findElement(
+          By.xpath(`//*[text()='${text}']`),
+        );
+      } else if (contains) {
+        element = await this.webdriver.findElement(
+          By.xpath(`//*[contains(., '${contains}')]`),
+        );
+      } else if (id) {
+        element = await this.webdriver.findElement(By.id(id));
+      } else if (xpath) {
+        element = await this.webdriver.findElement(By.xpath(xpath));
+      } else {
+        throw new Error("No valid selector provided");
+      }
 
-    if (!element) {
-      throw new Error(`Element not found: ${text || contains || id || xpath}`);
+      if (!element) {
+        throw new Error(
+          `Element not found: ${text || contains || id || xpath}`,
+        );
+      }
+    } finally {
+      this.webdriver.manage().setTimeouts({ implicit: this.defaultMaxWait });
     }
 
     this.selectedElement = element;
-    return this;
   }
 
   /**
-   * Click on the selected element
+   * Click on HTML element
+   *
+   * It accepts at most one selector. If multiple elements are matched, only the first one is selected.
+   * If no selector is passed, clicks on the last selected element.
+   *
+   * @param params - Object containing one of: text, contains, id, or xpath
    */
-  async click(): Promise<Browser> {
+  async click(selector: Selector | null = null): Promise<void> {
+    if (selector) await this.select(selector);
     if (!this.selectedElement) {
       throw new Error("No element selected");
     }
     await this.selectedElement.click();
     await sleep(this.pace);
-    return this;
   }
 
   /**
    * Enter text in the selected element
    */
-  async write(text: string): Promise<Browser> {
+  async write(text: string): Promise<void> {
     if (!this.selectedElement) {
       throw new Error("No element selected");
     }
     await this.selectedElement.sendKeys(text);
     await sleep(this.pace);
-    return this;
   }
 
   /**
@@ -142,7 +160,7 @@ export class Browser {
     if (!this.selectedElement) {
       throw new Error("No element selected");
     }
-    return await this.selectedElement.getAttribute("innerHTML");
+    return await this.getAttribute("innerHTML");
   }
 
   /**
@@ -224,9 +242,29 @@ export class Browser {
    * Get last avatar message
    */
   async getLastMessage(): Promise<string> {
-    await this.select({
-      xpath: "//div[contains(@class, 'chat-history')]/div[last()]",
-    });
+    try {
+      await this.select(
+        {
+          xpath:
+            "//span[@id='ui-content-agent']//div[contains(@class, 'agent-wrap')]",
+        },
+        5000,
+      );
+    } catch {
+      // TODO: Log
+    }
+    if (!this.found || !(await this.read())) {
+      try {
+        await this.select(
+          {
+            xpath: "//div[contains(@class, 'chat-history')]/div[last()]",
+          },
+          5000,
+        );
+      } catch {
+        // TODO: Log
+      }
+    }
     return await this.read();
   }
 

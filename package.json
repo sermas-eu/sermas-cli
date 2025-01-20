@@ -24,7 +24,6 @@
   "dependencies": {
     "@inquirer/rawlist": "^1.2.14",
     "@sermas/api-client": "^1.0.0-alpha.149",
-    "@types/selenium-webdriver": "^4.1.28",
     "axios": "^1.6.5",
     "cli-color": "^2.0.4",
     "commander": "^11.1.0",
@@ -34,7 +33,7 @@
     "js-yaml": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "mime-types": "^2.1.35",
-    "selenium-webdriver": "^4.27.0",
+    "path-scurry": "^2.0.0",
     "setimmediate": "^1.0.5",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"

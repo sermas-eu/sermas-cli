@@ -40,7 +40,7 @@ export class CliProgram {
 
   constructor() {}
 
-  async init() {
+  async init(extraCommandFolders: string[] = []) {
     const pkg: { name: string; version: string } = JSON.parse(
       (await fs.readFile(packageJson)).toString(),
     );
@@ -103,35 +103,47 @@ export class CliProgram {
       .on("option:yaml", () => this.silenceLogger())
       .on("option:json", () => this.silenceLogger());
 
-    const commandsBasePath = path.resolve(__dirname, "./commands/");
-    const commandsPathsList = await glob(
-      commandsBasePath + "/**/*" + this.fileExt,
-    );
-    const commandsList = commandsPathsList
-      .map((p) => p.replace(commandsBasePath + "/", ""))
-      .map((p) => p.split("/"));
+    const commandsPaths = [
+      path.resolve(__dirname, "./commands/"),
+      ...extraCommandFolders,
+    ];
 
     const tree: CliCommandLeaf = {};
-    for (const cmds of commandsList) {
-      let leaf = tree;
-      for (const cmd of cmds) {
-        const isCmd = cmd.indexOf(this.fileExt) > -1;
-        if (isCmd) {
-          leaf.commands = leaf.commands || [];
-          leaf.commands.push(cmd);
-        } else {
-          leaf[cmd] = leaf[cmd] || {};
-          leaf = leaf[cmd];
+
+    for (const commandsBasePath of commandsPaths) {
+      const commandsPathsList = await glob(
+        commandsBasePath + "/**/*" + this.fileExt,
+      );
+      const commandsList = commandsPathsList
+        .map((p) => p.replace(commandsBasePath + "/", ""))
+        .map((p) => p.split("/"));
+
+      // Populate tree with current folder structure
+      for (const cmds of commandsList) {
+        let leaf = tree;
+        let dirpath = path.resolve(commandsBasePath);
+        for (const cmd of cmds) {
+          dirpath = path.resolve(dirpath, cmd);
+          const isCmd = cmd.indexOf(this.fileExt) > -1;
+          if (isCmd) {
+            leaf.commands = leaf.commands || [];
+            leaf.commands.push(cmd);
+          } else {
+            leaf[cmd] = leaf[cmd] || {
+              dirpath: dirpath,
+            };
+            leaf = leaf[cmd];
+          }
         }
       }
-    }
 
-    const commands = await this.buildProgram({
-      program,
-      command: program,
-      dirpath: path.resolve(commandsBasePath),
-      leaf: tree,
-    });
+      // Load commands
+      await this.buildProgram({
+        program,
+        command: program,
+        leaf: tree,
+      });
+    }
 
     program
       .command("docs-gen")
@@ -163,11 +175,11 @@ export class CliProgram {
           );
         };
 
-        let subcommand = commands;
+        let subcommand = tree;
         if (words.length > 0) {
           let i = 0;
           while (i < depth) {
-            subcommand = commands[words[i]];
+            subcommand = tree[words[i]];
             i++;
           }
         }
@@ -201,6 +213,7 @@ export class CliProgram {
 
   async buildProgram(param: CliCommandTree, tree: Record<string, any> = {}) {
     for (const key in param.leaf) {
+      if (key === "dirpath") continue;
       if (key === "commands" && param.leaf.commands.length) {
         await Promise.all(
           param.leaf.commands.map(async (cmd) => {
@@ -210,7 +223,7 @@ export class CliProgram {
             }
 
             const cliCommand = await this.importModule(
-              path.resolve(param.dirpath, cmd),
+              path.resolve(param.leaf.dirpath, cmd),
             );
             // skip command if not found
             if (cliCommand === null) return;
@@ -293,10 +306,9 @@ export class CliProgram {
       }
 
       const leaf = param.leaf[key];
-      const dirpath = path.resolve(param.dirpath, key);
 
       const defaultModule = await this.importModule(
-        path.resolve(dirpath, `default${this.fileExt}`),
+        path.resolve(leaf.dirpath, `default${this.fileExt}`),
         true,
       );
 
@@ -307,13 +319,10 @@ export class CliProgram {
 
       tree[key] = await this.buildProgram({
         program: param.program,
-        dirpath,
         command,
         leaf,
       });
     }
-
-    return tree;
   }
 
   silenceLogger() {

@@ -68,11 +68,11 @@ export type ProgramTree = Record<string, CliCommandLeaf>;
 
 export interface CliCommandLeaf extends Record<string, any | CliCommandLeaf> {
   commands?: string[];
+  dirpath?: string;
 }
 
 export interface CliCommandTree {
   program: Command;
   command: Command;
   leaf: CliCommandLeaf;
-  dirpath: string;
 }

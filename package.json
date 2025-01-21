@@ -24,9 +24,11 @@
   "dependencies": {
     "@inquirer/rawlist": "^1.2.14",
     "@sermas/api-client": "^1.0.0-alpha.149",
+    "@types/d3": "^7.4.3",
     "axios": "^1.6.5",
     "cli-color": "^2.0.4",
     "commander": "^11.1.0",
+    "d3": "^6.7.0",
     "form-data": "^4.0.0",
     "glob": "^10.3.10",
     "inquirer": "^8.2.6",

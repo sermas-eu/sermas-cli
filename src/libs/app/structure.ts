@@ -33,7 +33,9 @@ export const structureToApp = (
   appStructure: AppStructure,
   importWebsites?: boolean,
 ): PlatformAppDto => {
-  const app: PlatformAppDto = ({ ...appStructure.app } || {}) as PlatformAppDto;
+  const app: PlatformAppDto = (
+    appStructure?.app ? { ...appStructure.app } : {}
+  ) as PlatformAppDto;
 
   app.appId = appStructure.appId || app.appId || undefined;
 

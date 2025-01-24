@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/sermas-eu/sermas-cli.git"
   },
-  "version": "1.0.0-alpha.93",
+  "version": "1.0.0-alpha.95",
   "type": "commonjs",
   "description": "Sermas CLI",
   "main": "dist/index.js",
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@inquirer/rawlist": "^1.2.14",
-    "@sermas/api-client": "^1.0.0-alpha.149",
+    "@sermas/api-client": "^1.0.0-alpha.151",
     "@types/d3": "^7.4.3",
     "axios": "^1.6.5",
     "cli-color": "^2.0.4",

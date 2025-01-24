@@ -1,4 +1,4 @@
-# SERMAS CLI 
+# SERMAS CLI
 
 **The readme is in progress. Please open an issue to report a problem or ask anything**
 
@@ -16,11 +16,11 @@ sermas-cli auth login
 
 ```
 
-
 ## development
 
 ### add autocompletion
-``` 
+
+```
 # in ~/.bashrc
 
 alias sermas-cli='cd <sermas-cli path>/cli && ./cli-local.sh'
@@ -31,9 +31,10 @@ _sermas_completion()
     COMPREPLY=( $(compgen -W "${opts}" -- $cur) )
 }
 complete -F _sermas_completion sermas
-``` 
+```
 
 ## License
+
 ```
    Copyright 2024 Spindox Labs srl
 

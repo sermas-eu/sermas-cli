@@ -53,7 +53,6 @@ export class CliProgram {
 
     const program = new Command();
     program
-
       .name(CLI_NAME)
       .version(CLI_VERSION)
       .description("Manage and interact with the SERMAS Toolkit API")

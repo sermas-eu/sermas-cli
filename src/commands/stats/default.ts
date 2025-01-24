@@ -12,7 +12,7 @@ export default {
       .option(
         "--until <iso_datetime|timestamp_in_ms>",
         "collect stats until this UTC moment. Defaults to now.",
-      );
-    // .option("--output-file <file_path>", "Save CSV stats in this file")
+      )
+      .option("--output-file <file_path>", "Save stats in this CSV file");
   },
 };

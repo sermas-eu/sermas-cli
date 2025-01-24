@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { CommandParams } from "../../libs/dto/cli.dto";
 import logger from "../../libs/logger";
-import { fail } from "../../libs/util";
+import { fail, writeFile } from "../../libs/util";
 import * as d3 from "d3";
 import fs from "fs";
 
@@ -37,6 +37,33 @@ const parseDateTime = (
   return date;
 };
 
+const writeResultsToCSV = async (results: any[], outputFile: string) => {
+  let output = "";
+  const headers = [
+    "label",
+    "mean",
+    "median",
+    "variance",
+    "max",
+    "min",
+    "count",
+  ];
+  output += headers.join(",") + "\n";
+  for (const result of results) {
+    const row = [
+      result.label,
+      result.mean,
+      result.median,
+      result.variance,
+      result.max,
+      result.min,
+      result.count,
+    ];
+    output += row.join(",") + "\n";
+  }
+  await writeFile(outputFile, output);
+};
+
 export default {
   setup: async (command: Command) => {
     command.description("get stats");
@@ -56,7 +83,7 @@ export default {
     if (until && until < since) {
       return fail("until date cannot be lower than since date");
     }
-    // const outputFile: string = flags.outputFile;
+    const outputFile: string = flags.outputFile;
 
     const apiClient = await api.getClient();
 
@@ -92,35 +119,10 @@ export default {
       });
     }
 
-    // TODO: This does NOT work since CLI is run from docker 
-    // (it cannot see the local filesystem)
-    // if (outputFile) {
-    //   const stream = fs.createWriteStream(outputFile);
-    //   const headers = [
-    //     "label",
-    //     "mean",
-    //     "median",
-    //     "variance",
-    //     "max",
-    //     "min",
-    //     "count",
-    //   ];
-    //   stream.write(headers.join(",") + "\n");
-    //   for (const result of results) {
-    //     const row = [
-    //       result.label,
-    //       result.mean,
-    //       result.median,
-    //       result.variance,
-    //       result.max,
-    //       result.min,
-    //       result.count,
-    //     ];
-    //     stream.write(row.join(",") + "\n");
-    //   }
-    //   stream.end();
-    // } else {
+    if (outputFile) {
+      await writeResultsToCSV(results, outputFile);
+    } else {
       return results;
-    // }
+    }
   },
 };

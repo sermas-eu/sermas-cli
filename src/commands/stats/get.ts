@@ -1,9 +1,8 @@
 import { Command } from "commander";
+import * as d3 from "d3";
 import { CommandParams } from "../../libs/dto/cli.dto";
 import logger from "../../libs/logger";
 import { fail, writeFile } from "../../libs/util";
-import * as d3 from "d3";
-import fs from "fs";
 
 const parseDateTime = (
   since: string,
@@ -121,8 +120,8 @@ export default {
 
     if (outputFile) {
       await writeResultsToCSV(results, outputFile);
-    } else {
-      return results;
     }
+
+    return results;
   },
 };

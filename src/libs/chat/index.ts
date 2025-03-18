@@ -6,11 +6,11 @@ import {
   UIContentDto,
 } from "@sermas/api-client";
 import { ulid } from "ulid";
-import logger from "../logger";
+
+type ChatMessage = DialogueMessageDto & { shown: boolean };
 
 export class ChatHandler {
-  private messages: DialogueMessageDto[] = [];
-  private lastMessageId: string;
+  private messages: ChatMessage[] = [];
 
   constructor(
     private readonly appId: string,
@@ -81,21 +81,23 @@ export class ChatHandler {
     });
   }
 
-  private process() {
+  private process(markShown?: boolean) {
     this.messages = this.messages
+      .map((m) => ({
+        ...m,
+        shown: markShown === undefined ? m.shown : markShown,
+      }))
       .filter((m) => m.actor === "agent")
-      .filter(
-        (m) =>
-          this.lastMessageId === undefined || m.messageId > this.lastMessageId,
-      )
-      .sort((a, b) => (a.messageId > b.messageId ? 1 : -1));
-
-    console.warn(this.lastMessageId, this.messages);
+      .filter((m) => m.text.trim().length > 0)
+      .filter((m) => !m.shown)
+      .sort((a, b) => (a.messageId <= b.messageId ? 1 : -1));
   }
 
   addMessage(message: DialogueMessageDto) {
-    logger.info(`Add message: [${message.actor}] ${message.text}`);
-    this.messages.push(message);
+    this.messages.push({
+      ...message,
+      shown: false,
+    });
     this.process();
   }
 
@@ -107,9 +109,7 @@ export class ChatHandler {
       "",
     );
 
-    this.lastMessageId = this.messages[this.messages.length - 1].messageId;
-    this.process();
-
+    this.process(true);
     return `[agent] \n${fullMessage}\n`;
   }
 }

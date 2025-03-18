@@ -1,4 +1,4 @@
-#!./node_modules/.bin/ts-node
+#!./node_modules/.bin/tsx --inspect=0.0.0.0:9233
 import { CliProgram } from "./cli";
 import logger from "./libs/logger";
 

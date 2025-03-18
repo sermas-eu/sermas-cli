@@ -13,6 +13,7 @@ import {
   PlatformAppExportFilterDto,
   RegistrationRequestDto,
   SermasApiClient,
+  SessionDto,
   UIAssetDto,
 } from "@sermas/api-client";
 
@@ -153,6 +154,14 @@ export class BaseApi {
     logger.verbose(`Performing user login`);
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.authentication.login({ requestBody }),
+    );
+  }
+
+  async startSession(requestBody: Partial<SessionDto>) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.session.createSession({
+        requestBody: requestBody as unknown as SessionDto,
+      }),
     );
   }
 

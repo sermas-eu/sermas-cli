@@ -37,6 +37,7 @@
     "mime-types": "^2.1.35",
     "path-scurry": "^2.0.0",
     "setimmediate": "^1.0.5",
+    "ulid": "^2.4.0",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
   },

@@ -1,12 +1,11 @@
-import { DialogueMessageDto } from "@sermas/api-client";
 import { Command, Option } from "commander";
+import { ChatHandler } from "../../libs/chat";
 import { CommandParams } from "../../libs/dto/cli.dto";
 import logger from "../../libs/logger";
-import { fail, sleep, uuid, waitInterrupt } from "../../libs/util";
+import { fail, uuid, waitInterrupt } from "../../libs/util";
 
 const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
 const defaultLanguage = "en-GB";
-const defaultLLM = "chatgpt";
 
 export default {
   setup: async (command: Command) => {
@@ -24,30 +23,15 @@ export default {
         )
           .default(defaultLanguage)
           .choices(languages),
-      )
-      .addOption(
-        new Option(
-          "-g, --gender [gender]",
-          "Gender of the avatar (used by TTS)",
-        )
-          .default("F")
-          .choices(["F", "M", "X"]),
-      )
-      .addOption(
-        new Option("-m, --llm [llm]", "LLM model to use").default(defaultLLM),
       );
   },
 
   run: async ({ args, config, feature, flags, api }: CommandParams) => {
     let [appId, sessionId] = args;
-    const { llm, language, gender } = flags;
+    const { language } = flags;
 
     if (!appId) {
       appId = config.currentApp;
-    }
-
-    if (!sessionId) {
-      sessionId = uuid();
     }
 
     if (!appId) {
@@ -59,73 +43,36 @@ export default {
     const appApi = await api.getAppClient(appId);
     const appApiClient = appApi.getClient();
 
-    const messages: DialogueMessageDto[] = [];
-
-    await appApiClient.events.dialogue.onDialogueMessages(
-      (ev: DialogueMessageDto) => {
-        messages.push(ev);
-      },
-    );
-
-    const showAnswer = () => {
-      if (messages.length === 0) return;
-
-      const fullMessage = messages
-        .sort((m1, m2) => (+m1.chunkId < +m2.chunkId ? 1 : -1))
-        .reduce((text, message) => `${text} ${message.text}`, "");
-
-      messages.splice(0, messages.length);
-
-      logger.info(`[agent] \n${fullMessage}\n`);
-    };
-
-    let waitLock = false;
-    const waitAnswer = async () => {
-      if (waitLock) return;
-      waitLock = true;
-
-      // sleep for the slooowy tools
-      await sleep(2000);
-      logger.debug(`Waiting for response...`);
-
-      const maxSleep = 5;
-      let sleepedTime = 0;
-      let lastMessage = messages.length;
-      let waitMore = true;
-      while (waitMore) {
-        await sleep(500);
-
-        const received = messages.length !== lastMessage;
-        if (received) {
-          sleepedTime = 0;
-          showAnswer();
-          continue;
-        }
-        waitMore = sleepedTime < maxSleep;
-        sleepedTime++;
-        lastMessage = messages.length;
-      }
-      showAnswer();
-      waitLock = false;
-    };
-
-    setInterval(waitAnswer, 2000);
+    if (!sessionId) {
+      const session = await appApi.startSession({
+        appId,
+        agentId: uuid(),
+      });
+      sessionId = session.sessionId;
+      logger.info(`Created sessionId=${sessionId}`);
+    }
 
     const sendChat = async (text: string) => {
       const res = await appApi.sendChatMessage({
         text,
         appId,
         sessionId,
-        gender: gender ? (gender === "X" ? "F" : gender) : "F",
         language: language || defaultLanguage,
-        llm: llm || defaultLLM,
       });
       if (res === null) return fail();
       logger.info(`[you] ${text}`);
     };
 
+    const chatHandler = new ChatHandler(appId, sessionId, appApiClient);
+    await chatHandler.init();
+
     let quit = false;
     waitInterrupt().then(() => (quit = true));
+
+    setInterval(() => {
+      const message = chatHandler.getMessages();
+      if (message) logger.info(message);
+    }, 500);
 
     while (!quit) {
       const answers = await feature.prompt([

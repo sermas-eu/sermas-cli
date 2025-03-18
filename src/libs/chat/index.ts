@@ -6,19 +6,51 @@ import {
   UIContentDto,
 } from "@sermas/api-client";
 import { ulid } from "ulid";
+import { AppApi } from "../api/api.app";
+import { CliApi } from "../api/api.cli";
+import { CliFeature } from "../dto/cli.dto";
+import logger from "../logger";
+import { fail, uuid } from "../util";
+
+export const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
+export const defaultLanguage = "en-GB";
 
 type ChatMessage = DialogueMessageDto & { shown: boolean };
 
 export class ChatHandler {
   private messages: ChatMessage[] = [];
+  private readonly sessionId: string;
+  private appApi: AppApi;
+  private appApiClient: SermasApiClient;
+
+  private end = false;
 
   constructor(
+    private readonly api: CliApi,
+    private readonly feature: CliFeature,
     private readonly appId: string,
-    private readonly sessionId: string,
-    private readonly appApiClient: SermasApiClient,
-  ) {}
+  ) { }
 
-  async init() {
+  quit() {
+    this.end = true;
+  }
+
+  async init(sessionId?: string, language?: string) {
+    this.appApi = await this.api.getAppClient(this.appId);
+    this.appApiClient = this.appApi.getClient();
+
+    if (!sessionId) {
+      const session = await this.appApi.startSession({
+        appId: this.appId,
+        agentId: uuid(),
+        settings: {
+          ttsEnabled: false,
+        } as any,
+      });
+      sessionId = session.sessionId;
+      logger.info(`Created sessionId=${sessionId}`);
+    }
+
     await this.appApiClient.events.dialogue.onDialogueMessages(
       (ev: DialogueMessageDto) => {
         this.addMessage(ev);
@@ -79,6 +111,36 @@ export class ChatHandler {
 
       this.addMessage(message);
     });
+
+    setInterval(() => {
+      const message = this.getMessages();
+      if (message) logger.info(message);
+    }, 500);
+
+    while (!this.end) {
+      const answers = await this.feature.prompt([
+        {
+          name: "message",
+          message: "Your message",
+          type: "input",
+        },
+      ]);
+
+      if (answers.message && answers.message.length > 0) {
+        await chatHandler.sendChat(answers.message, language);
+      }
+    }
+  }
+
+  async sendChat(text: string, language?: string) {
+    const res = await this.appApi.sendChatMessage({
+      text,
+      appId: this.appId,
+      sessionId: this.sessionId,
+      language: language || defaultLanguage,
+    });
+    if (res === null) return fail();
+    return res;
   }
 
   private process(markShown?: boolean) {
@@ -90,7 +152,7 @@ export class ChatHandler {
       .filter((m) => m.actor === "agent")
       .filter((m) => m.text.trim().length > 0)
       .filter((m) => !m.shown)
-      .sort((a, b) => (a.messageId <= b.messageId ? 1 : -1));
+      .sort((a, b) => (a.messageId > b.messageId ? 1 : -1));
   }
 
   addMessage(message: DialogueMessageDto) {
@@ -110,6 +172,6 @@ export class ChatHandler {
     );
 
     this.process(true);
-    return `[agent] \n${fullMessage}\n`;
+    return `[agent] ${fullMessage}`;
   }
 }

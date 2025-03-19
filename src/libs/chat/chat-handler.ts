@@ -43,7 +43,10 @@ export class ChatHandler {
     this.appApi = await this.api.getAppClient(this.appId);
     this.appApiClient = this.appApi.getClient();
 
-    sessionId = await this.ensureSession(sessionId, language);
+    this.sessionId = await this.ensureSession(sessionId, language);
+    if (!this.sessionId) {
+      throw new Error("Missing sessionId");
+    }
 
     await this.appApiClient.events.dialogue.onDialogueMessages(
       (ev: DialogueMessageDto) => {
@@ -110,7 +113,6 @@ export class ChatHandler {
   async ensureSession(sessionId?: string, language?: string) {
     if (sessionId) {
       logger.info(`Reusing session sessionId=${sessionId}`);
-      this.sessionId = sessionId;
       return sessionId;
     }
 
@@ -124,7 +126,6 @@ export class ChatHandler {
     });
 
     logger.info(`Created sessionId=${session.sessionId}`);
-    this.sessionId = sessionId;
     return session.sessionId;
   }
 

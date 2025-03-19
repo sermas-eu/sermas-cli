@@ -8,6 +8,7 @@ import {
 import { CommandParams } from "../../libs/dto/cli.dto";
 import logger from "../../libs/logger";
 import { fail, waitInterrupt } from "../../libs/util";
+import { sleep } from "@sermas/api-client";
 
 export default {
   setup: async (command: Command) => {
@@ -53,7 +54,11 @@ export default {
       language,
       onMessage: (messages: ChatMessage[]) => {
         if (!messages.length) return;
-        messages.forEach((m) => logger.info(`[agent] ${m.ts} ${m.text}`));
+        messages.forEach((m) =>
+          logger.info(
+            `[agent] ${new Date(m.ts).toTimeString().split(" ")[0]} ${m.text}`,
+          ),
+        );
       },
     });
 
@@ -61,11 +66,13 @@ export default {
 
     await chatHandler.init();
 
-    if (message) {
-      await chatHandler.sendChat(message);
-    }
-
     await chatHandler.loop(async () => {
+      await sleep(2500);
+
+      if (message) {
+        await chatHandler.sendChat(message);
+      }
+
       const answers = await feature.prompt([
         {
           name: "message",

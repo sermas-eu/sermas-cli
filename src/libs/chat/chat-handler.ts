@@ -3,6 +3,8 @@ import {
   DialogueMessageDto,
   QuizContentDto,
   SermasApiClient,
+  SessionChangedDto,
+  sleep,
   UIContentDto,
 } from "@sermas/api-client";
 import { ulid } from "ulid";
@@ -38,6 +40,9 @@ export class ChatHandler {
 
   private end = false;
 
+  private isWaiting = false;
+  private lastMessageReceived?: Date = undefined;
+
   constructor(args: ChatHandlerArgs) {
     this.api = args.api;
     this.appId = args.appId;
@@ -58,6 +63,17 @@ export class ChatHandler {
     if (!this.sessionId) {
       throw new Error("Missing sessionId");
     }
+
+    await this.appApiClient.events.session.onSessionChanged(
+      (ev: SessionChangedDto) => {
+        if (ev.sessionId !== this.sessionId) return;
+
+        if (ev.record.closedAt) {
+          logger.info(`Session closed, exiting chat`);
+          this.quit();
+        }
+      },
+    );
 
     await this.appApiClient.events.dialogue.onDialogueMessages(
       (ev: DialogueMessageDto) => {
@@ -136,6 +152,11 @@ export class ChatHandler {
       } as any,
     });
 
+    if (!session) {
+      logger.error(`Failed to create session`);
+      return null;
+    }
+
     logger.info(`Created sessionId=${session.sessionId}`);
     return session.sessionId;
   }
@@ -146,12 +167,91 @@ export class ChatHandler {
     }
     const intv = setInterval(() => this.process(), 500);
     while (!this.end) {
-      await handleMessage();
+      try {
+        await handleMessage();
+      } catch (e) {
+        logger.error(`Error sending message: ${e.stack}`);
+        break;
+      }
     }
     clearInterval(intv);
   }
 
+  async waitResponse() {
+    this.isWaiting = true;
+
+    const waitFor = 1000;
+    const sameMessageMax = 5;
+
+    const waitTimesMax = 10;
+
+    return new Promise<void>(async (resolve) => {
+      let sameMessage = 0;
+      let waitTimes = 0;
+      while (this.isWaiting) {
+        await sleep(waitFor);
+
+        const queue = this.queue.sort((a, b) =>
+          new Date(a.ts) > new Date(b.ts) ? 1 : -1,
+        );
+
+        const breakWaitTimes = () => {
+          waitTimes++;
+          if (waitTimes >= waitTimesMax) {
+            return true;
+          }
+          return false;
+        };
+
+        if (!queue.length) {
+          if (breakWaitTimes()) {
+            break;
+          }
+          continue;
+        }
+
+        // console.log("queue", queue);
+        const lastMessages = queue.slice(-1);
+        const lastMessage = lastMessages[0];
+        if (!lastMessage) {
+          if (breakWaitTimes()) {
+            break;
+          }
+          continue;
+        }
+        const ts = new Date(lastMessage.ts);
+
+        if (
+          this.lastMessageReceived &&
+          this.lastMessageReceived.getTime() === ts.getTime()
+        ) {
+          sameMessage++;
+          if (sameMessage >= sameMessageMax) {
+            break;
+          }
+        } else {
+          this.lastMessageReceived = ts;
+        }
+
+        logger.info(
+          `Waiting for response (${sameMessage} / ${sameMessageMax}) ..`,
+        );
+      }
+
+      logger.info(`Response received`);
+      this.isWaiting = false;
+
+      this.process();
+
+      resolve();
+    });
+  }
+
   async sendChat(text: string, language?: string) {
+    if (!this.appApi) {
+      await this.init();
+    }
+
     const res = await this.appApi.sendChatMessage({
       text,
       appId: this.appId,
@@ -174,6 +274,10 @@ export class ChatHandler {
   // dequeue messages after a threshold time
   private process() {
     let hasNewMessages = false;
+
+    // skip, we are waiting for messages to arrive
+    if (this.isWaiting) return;
+
     this.queue.forEach((message, i) => {
       if (Date.now() - new Date(message.ts).getTime() < 800) return;
       this.messages[message.messageId] = this.messages[message.messageId] || [];

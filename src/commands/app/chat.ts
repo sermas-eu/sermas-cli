@@ -4,7 +4,7 @@ import {
   ChatMessage,
   defaultLanguage,
   languages,
-} from "../../libs/chat";
+} from "../../libs/chat/chat-handler";
 import { CommandParams } from "../../libs/dto/cli.dto";
 import logger from "../../libs/logger";
 import { fail, waitInterrupt } from "../../libs/util";

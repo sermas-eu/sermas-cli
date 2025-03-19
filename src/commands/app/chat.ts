@@ -25,13 +25,16 @@ export default {
         )
           .default(defaultLanguage)
           .choices(languages),
+      )
+      .addOption(
+        new Option("-m, --message [message]", "Message to send to the avatar"),
       );
   },
 
   run: async ({ args, config, feature, flags, api }: CommandParams) => {
     let appId = args[0];
     const sessionId = args[1];
-    const { language } = flags;
+    const { language, message } = flags;
 
     if (!appId) {
       appId = config.currentApp;
@@ -43,17 +46,24 @@ export default {
       );
     }
 
-    const chatHandler = new ChatHandler(
+    const chatHandler = new ChatHandler({
       api,
       appId,
-      (messages: ChatMessage[]) => {
+      sessionId,
+      language,
+      onMessage: (messages: ChatMessage[]) => {
         if (!messages.length) return;
         messages.forEach((m) => logger.info(`[agent] ${m.ts} ${m.text}`));
       },
-    );
-    await chatHandler.init(sessionId, language);
+    });
 
     waitInterrupt().then(() => chatHandler.quit());
+
+    await chatHandler.init();
+
+    if (message) {
+      await chatHandler.sendChat(message);
+    }
 
     await chatHandler.loop(async () => {
       const answers = await feature.prompt([

@@ -16,8 +16,19 @@ export const defaultLanguage = "en-GB";
 
 export type ChatMessage = DialogueMessageDto & { shown: boolean };
 
+export type ChatHandlerArgs = {
+  api: CliApi;
+  appId: string;
+  sessionId?: string;
+  language?: string;
+  onMessage: (messages: ChatMessage[]) => Promise<void> | void;
+};
 export class ChatHandler {
-  private sessionId: string;
+  private readonly api: CliApi;
+  private readonly appId: string;
+  private readonly language?: string;
+  private sessionId?: string;
+  private readonly onMessage: (messages: ChatMessage[]) => Promise<void> | void;
 
   private queue: ChatMessage[] = [];
   private messages: Record<string, ChatMessage[]> = {};
@@ -27,23 +38,23 @@ export class ChatHandler {
 
   private end = false;
 
-  constructor(
-    private readonly api: CliApi,
-    private readonly appId: string,
-    private readonly onMessage: (
-      messages: ChatMessage[],
-    ) => Promise<void> | void,
-  ) {}
+  constructor(args: ChatHandlerArgs) {
+    this.api = args.api;
+    this.appId = args.appId;
+    this.sessionId = args.sessionId;
+    this.language = args.language;
+    this.onMessage = args.onMessage;
+  }
 
   quit() {
     this.end = true;
   }
 
-  async init(sessionId?: string, language?: string) {
+  async init() {
     this.appApi = await this.api.getAppClient(this.appId);
     this.appApiClient = this.appApi.getClient();
 
-    this.sessionId = await this.ensureSession(sessionId, language);
+    this.sessionId = await this.ensureSession(this.sessionId, this.language);
     if (!this.sessionId) {
       throw new Error("Missing sessionId");
     }
@@ -130,7 +141,9 @@ export class ChatHandler {
   }
 
   async loop(handleMessage: () => Promise<void>) {
-    if (!this.appApi) throw new Error("Call init() first");
+    if (!this.appApi) {
+      await this.init();
+    }
     const intv = setInterval(() => this.process(), 500);
     while (!this.end) {
       await handleMessage();
@@ -162,7 +175,7 @@ export class ChatHandler {
   private process() {
     let hasNewMessages = false;
     this.queue.forEach((message, i) => {
-      if (Date.now() - new Date(message.ts).getTime() < 500) return;
+      if (Date.now() - new Date(message.ts).getTime() < 800) return;
       this.messages[message.messageId] = this.messages[message.messageId] || [];
       this.messages[message.messageId].push(message);
       delete this.queue[i];
@@ -171,6 +184,7 @@ export class ChatHandler {
 
     for (const key in this.messages) {
       this.messages[key] = this.messages[key]
+        .filter((m) => m.sessionId === this.sessionId)
         .filter((m) => m.actor === "agent")
         .filter((m) => m.text.trim().length > 0)
         .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1));

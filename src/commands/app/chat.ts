@@ -1,6 +1,12 @@
 import { Command, Option } from "commander";
-import { ChatHandler, defaultLanguage, languages } from "../../libs/chat";
+import {
+  ChatHandler,
+  ChatMessage,
+  defaultLanguage,
+  languages,
+} from "../../libs/chat";
 import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
 import { fail, waitInterrupt } from "../../libs/util";
 
 export default {
@@ -23,7 +29,8 @@ export default {
   },
 
   run: async ({ args, config, feature, flags, api }: CommandParams) => {
-    const [appId, sessionId] = args;
+    let appId = args[0];
+    const sessionId = args[1];
     const { language } = flags;
 
     if (!appId) {
@@ -36,9 +43,30 @@ export default {
       );
     }
 
-    const chatHandler = new ChatHandler(api, feature, appId);
+    const chatHandler = new ChatHandler(
+      api,
+      appId,
+      (messages: ChatMessage[]) => {
+        if (!messages.length) return;
+        messages.forEach((m) => logger.info(`[agent] ${m.ts} ${m.text}`));
+      },
+    );
+    await chatHandler.init(sessionId, language);
+
     waitInterrupt().then(() => chatHandler.quit());
 
-    await chatHandler.init(sessionId, language);
+    await chatHandler.loop(async () => {
+      const answers = await feature.prompt([
+        {
+          name: "message",
+          message: "Your message",
+          type: "input",
+        },
+      ]);
+
+      if (!answers.message || !answers.message.length) return;
+
+      await chatHandler.sendChat(answers.message, language);
+    });
   },
 };

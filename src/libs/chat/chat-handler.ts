@@ -17,7 +17,7 @@ export const defaultLanguage = "en-GB";
 export type ChatMessage = DialogueMessageDto & { shown: boolean };
 
 export class ChatHandler {
-  private readonly sessionId: string;
+  private sessionId: string;
 
   private queue: ChatMessage[] = [];
   private messages: Record<string, ChatMessage[]> = {};
@@ -110,6 +110,7 @@ export class ChatHandler {
   async ensureSession(sessionId?: string, language?: string) {
     if (sessionId) {
       logger.info(`Reusing session sessionId=${sessionId}`);
+      this.sessionId = sessionId;
       return sessionId;
     }
 
@@ -123,6 +124,7 @@ export class ChatHandler {
     });
 
     logger.info(`Created sessionId=${session.sessionId}`);
+    this.sessionId = sessionId;
     return session.sessionId;
   }
 

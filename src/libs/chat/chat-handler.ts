@@ -1,6 +1,8 @@
 import {
   ButtonDto,
   DialogueMessageDto,
+  DialogueSessionRequestDto,
+  DialogueSessionRequestStatus,
   QuizContentDto,
   SermasApiClient,
   SessionChangedDto,
@@ -16,7 +18,24 @@ import { fail, uuid } from "../util";
 export const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
 export const defaultLanguage = "en-GB";
 
-export type ChatMessage = DialogueMessageDto & { shown: boolean };
+type MessageSource = {
+  completed?: boolean;
+};
+
+type MessageSourceUIContent = MessageSource & {
+  type: "ui";
+  ui: UIContentDto;
+};
+
+type MessageSourceDialogueMessage = MessageSource & {
+  type: "message";
+  message: DialogueMessageDto;
+};
+
+export type ChatMessage = DialogueMessageDto & {
+  shown: boolean;
+  source: MessageSourceDialogueMessage | MessageSourceUIContent;
+};
 
 export type ChatHandlerArgs = {
   api: CliApi;
@@ -25,6 +44,14 @@ export type ChatHandlerArgs = {
   language?: string;
   onMessage: (messages: ChatMessage[]) => Promise<void> | void;
 };
+
+type QueueItem = {
+  requestId: string;
+  status?: DialogueSessionRequestStatus;
+  completed: boolean;
+  messages: ChatMessage[];
+};
+
 export class ChatHandler {
   private readonly api: CliApi;
   private readonly appId: string;
@@ -32,7 +59,7 @@ export class ChatHandler {
   private sessionId?: string;
   private readonly onMessage: (messages: ChatMessage[]) => Promise<void> | void;
 
-  private queue: ChatMessage[] = [];
+  private queue: Record<string, QueueItem> = {};
   private messages: Record<string, ChatMessage[]> = {};
 
   private appApi: AppApi;
@@ -59,12 +86,25 @@ export class ChatHandler {
     this.appApi = await this.api.getAppClient(this.appId);
     this.appApiClient = this.appApi.getClient();
 
-    this.sessionId = await this.ensureSession(this.sessionId, this.language);
-    if (!this.sessionId) {
-      throw new Error("Missing sessionId");
-    }
+    this.sessionId = this.sessionId || uuid();
 
-    await this.appApiClient.events.session.onSessionChanged(
+    this.appApiClient.events.dialogue.onRequest(
+      (ev: DialogueSessionRequestDto) => {
+        // logger.info(`Request UPDATE ----- `);
+        // console.info(ev.requestId, ev.status);
+
+        if (ev.sessionId !== this.sessionId) return;
+
+        if (!ev.requestId || !this.queue[ev.requestId]) return;
+
+        this.queue[ev.requestId].status = ev.status;
+        this.queue[ev.requestId].completed =
+          ev.status === "ended" || ev.status === "cancelled";
+        logger.verbose(`Status changed ${ev.status} requestId=${ev.requestId}`);
+      },
+    );
+
+    this.appApiClient.events.session.onSessionChanged(
       (ev: SessionChangedDto) => {
         if (ev.sessionId !== this.sessionId) return;
 
@@ -75,21 +115,41 @@ export class ChatHandler {
       },
     );
 
-    await this.appApiClient.events.dialogue.onDialogueMessages(
+    this.appApiClient.events.dialogue.onDialogueMessages(
       (ev: DialogueMessageDto) => {
-        this.addMessage(ev);
+        const message: ChatMessage = {
+          ...ev,
+          shown: false,
+          source: {
+            type: "message",
+            message: ev,
+          },
+        };
+
+        if (message.actor !== "agent") return;
+
+        logger.verbose(`Got dialogue message [${message.text}]`);
+        this.addMessage(message);
       },
     );
 
-    await this.appApiClient.events.ui.onContent((ev: UIContentDto) => {
-      const message: DialogueMessageDto = {
+    this.appApiClient.events.ui.onContent((ev: UIContentDto) => {
+      const message: ChatMessage = {
         appId: this.appId,
         sessionId: this.sessionId,
         actor: "agent",
+        requestId: ev.requestId || ulid(),
         messageId: ev.messageId || ulid(),
         chunkId: ev.chunkId || ulid(),
         ts: ev.ts || new Date().toString(),
         text: "",
+
+        shown: false,
+        source: {
+          type: "ui",
+          ui: ev,
+          completed: true,
+        },
       };
 
       switch (ev.contentType) {
@@ -133,16 +193,17 @@ export class ChatHandler {
           return;
       }
 
+      logger.verbose(`Got UI content type=${ev.contentType}`);
       this.addMessage(message);
     });
+
+    this.sessionId = await this.ensureSession(this.sessionId, this.language);
+    if (!this.sessionId) {
+      throw new Error("Missing sessionId");
+    }
   }
 
   async ensureSession(sessionId?: string, language?: string) {
-    if (sessionId) {
-      logger.info(`Reusing session sessionId=${sessionId}`);
-      return sessionId;
-    }
-
     const session = await this.appApi.startSession({
       appId: this.appId,
       agentId: uuid(),
@@ -157,7 +218,7 @@ export class ChatHandler {
       return null;
     }
 
-    logger.info(`Created sessionId=${session.sessionId}`);
+    logger.info(`Using sessionId=${session.sessionId}`);
     return session.sessionId;
   }
 
@@ -191,9 +252,12 @@ export class ChatHandler {
       while (this.isWaiting) {
         await sleep(waitFor);
 
-        const queue = this.queue.sort((a, b) =>
-          new Date(a.ts) > new Date(b.ts) ? 1 : -1,
-        );
+        const queue = Object.values(this.queue)
+          .filter((q) => q.completed)
+          .reduce((list, q) => [...list, ...q.messages], [])
+          .flat()
+          .filter((m) => m.actor === "agent")
+          .sort((a, b) => (new Date(a.ts) > new Date(b.ts) ? 1 : -1));
 
         const breakWaitTimes = () => {
           waitTimes++;
@@ -219,11 +283,12 @@ export class ChatHandler {
           }
           continue;
         }
-        const ts = new Date(lastMessage.ts);
 
+        const ts = new Date(lastMessage.ts);
         if (
-          this.lastMessageReceived &&
-          this.lastMessageReceived.getTime() === ts.getTime()
+          (this.lastMessageReceived &&
+            this.lastMessageReceived.getTime() === ts.getTime()) ||
+          lastMessage.completed
         ) {
           sameMessage++;
           if (sameMessage >= sameMessageMax) {
@@ -233,12 +298,12 @@ export class ChatHandler {
           this.lastMessageReceived = ts;
         }
 
-        logger.info(
-          `Waiting for response (${sameMessage} / ${sameMessageMax}) ..`,
+        logger.verbose(
+          `Waiting for response (${sameMessage + 1} / ${sameMessageMax}) ..`,
         );
       }
 
-      logger.info(`Response received`);
+      logger.verbose(`Response received`);
       this.isWaiting = false;
 
       this.process();
@@ -256,7 +321,7 @@ export class ChatHandler {
       text,
       appId: this.appId,
       sessionId: this.sessionId,
-      language: language || defaultLanguage,
+      language: language || this.language || defaultLanguage,
     });
     if (res === null) return fail();
     return res;
@@ -278,13 +343,17 @@ export class ChatHandler {
     // skip, we are waiting for messages to arrive
     if (this.isWaiting) return;
 
-    this.queue.forEach((message, i) => {
-      if (Date.now() - new Date(message.ts).getTime() < 800) return;
-      this.messages[message.messageId] = this.messages[message.messageId] || [];
-      this.messages[message.messageId].push(message);
-      delete this.queue[i];
-      hasNewMessages = true;
-    });
+    for (const key in this.queue) {
+      if (!this.queue[key].completed) continue;
+      this.queue[key].messages.forEach((message, i) => {
+        // if (Date.now() - new Date(message.ts).getTime() < 800) return;
+        this.messages[message.messageId] =
+          this.messages[message.messageId] || [];
+        this.messages[message.messageId].push(message);
+        delete this.queue[key].messages[i];
+        hasNewMessages = true;
+      });
+    }
 
     for (const key in this.messages) {
       this.messages[key] = this.messages[key]
@@ -299,11 +368,23 @@ export class ChatHandler {
     }
   }
 
-  addMessage(message: DialogueMessageDto) {
-    this.queue.push({
+  addMessage(message: ChatMessage) {
+    const requestId = message.requestId;
+
+    if (!this.queue[requestId]) {
+      logger.verbose(`Tracking requestId=${requestId}`);
+      this.queue[requestId] = {
+        requestId,
+        completed: message.source.completed === true,
+        messages: [],
+      };
+    }
+
+    this.queue[requestId].messages.push({
       ...message,
       shown: false,
     });
+
     this.process();
   }
 

@@ -18,7 +18,6 @@ export default {
         "[appId]",
         `Reference to an application or the selected one will be used`,
       )
-      .argument("[sessionId]", `A session ID to reuse or a new one is created`)
       .addOption(
         new Option(
           "-l, --language [language]",
@@ -34,7 +33,6 @@ export default {
 
   run: async ({ args, config, feature, flags, api }: CommandParams) => {
     let appId = args[0];
-    const sessionId = args[1];
     const { language, message } = flags;
 
     if (!appId) {
@@ -50,7 +48,6 @@ export default {
     const chatHandler = new ChatHandler({
       api,
       appId,
-      sessionId,
       language,
       onMessage: (messages: ChatMessage[]) => {
         if (!messages.length) return;
@@ -65,6 +62,8 @@ export default {
     waitInterrupt().then(() => chatHandler.quit());
 
     await chatHandler.init();
+
+    await chatHandler.waitResponse();
 
     await chatHandler.loop(async () => {
       await sleep(2500);

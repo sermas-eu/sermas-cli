@@ -1,4 +1,4 @@
-import { ButtonsUIContentDto } from "@sermas/api-client";
+import { ButtonsUIContentDto, sleep } from "@sermas/api-client";
 import { CliApi } from "../api/api.cli";
 import {
   ChatHandler,
@@ -14,7 +14,7 @@ export class ChatBatchRunner {
 
   constructor(
     private readonly api: CliApi,
-    private readonly chatBatch: ChatBatch,
+    private readonly chatBatch: ChatBatch
   ) {}
 
   async init() {
@@ -64,10 +64,10 @@ export class ChatBatchRunner {
       .filter(
         (m) =>
           m.source.type === "ui" &&
-          (m.source as MessageSourceUIContent).ui?.contentType === "buttons",
+          (m.source as MessageSourceUIContent).ui?.contentType === "buttons"
       )
       .map(
-        (m) => (m.source as MessageSourceUIContent).ui as ButtonsUIContentDto,
+        (m) => (m.source as MessageSourceUIContent).ui as ButtonsUIContentDto
       )
       .flat();
     if (!buttons.length) {
@@ -93,8 +93,8 @@ export class ChatBatchRunner {
             // return only the label selected or undefined
             .reduce(
               (selection: string | undefined, value) => value || selection,
-              undefined,
-            ),
+              undefined
+            )
       )
       .filter((response) => response !== undefined);
 
@@ -118,7 +118,7 @@ export class ChatBatchRunner {
 
   async evaluateResponse(
     messages: ChatMessage[],
-    chatMessage: ChatBatchMessage,
+    chatMessage: ChatBatchMessage
   ) {
     const result: Partial<ChatBatchRunnerResult> = {
       success: true,
@@ -163,7 +163,10 @@ export class ChatBatchRunner {
 
     for (const chatMessage of this.chatBatch.chat) {
       // send plain text chat message
-      if (chatMessage.message !== undefined) {
+      if (chatMessage.wait !== undefined) {
+        logger.info(`wait ${chatMessage.wait} seconds`);
+        await sleep(chatMessage.wait * 1000);
+      } else if (chatMessage.message !== undefined) {
         await this.sendChatMessage(chatMessage.message);
       } else if (chatMessage.select !== undefined) {
         const res = await this.handleSelect(messages, chatMessage);

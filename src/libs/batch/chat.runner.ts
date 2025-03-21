@@ -135,6 +135,10 @@ export class ChatBatchRunner {
     };
 
     let messages: ChatMessage[] = [];
+
+    messages = await this.chatHandler.waitResponse();
+    this.logMessages(messages);
+
     for (const chatMessage of this.chatBatch.chat) {
       // send plain text chat message
       if (chatMessage.message !== undefined) {

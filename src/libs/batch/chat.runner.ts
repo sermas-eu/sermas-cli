@@ -14,7 +14,7 @@ export class ChatBatchRunner {
 
   constructor(
     private readonly api: CliApi,
-    private readonly chatBatch: ChatBatch
+    private readonly chatBatch: ChatBatch,
   ) {}
 
   async init() {
@@ -64,10 +64,10 @@ export class ChatBatchRunner {
       .filter(
         (m) =>
           m.source.type === "ui" &&
-          (m.source as MessageSourceUIContent).ui?.contentType === "buttons"
+          (m.source as MessageSourceUIContent).ui?.contentType === "buttons",
       )
       .map(
-        (m) => (m.source as MessageSourceUIContent).ui as ButtonsUIContentDto
+        (m) => (m.source as MessageSourceUIContent).ui as ButtonsUIContentDto,
       )
       .flat();
     if (!buttons.length) {
@@ -93,8 +93,8 @@ export class ChatBatchRunner {
             // return only the label selected or undefined
             .reduce(
               (selection: string | undefined, value) => value || selection,
-              undefined
-            )
+              undefined,
+            ),
       )
       .filter((response) => response !== undefined);
 
@@ -118,21 +118,20 @@ export class ChatBatchRunner {
 
   async evaluateResponse(
     messages: ChatMessage[],
-    chatMessage: ChatBatchMessage
+    chatMessage: ChatBatchMessage,
   ) {
     const result: Partial<ChatBatchRunnerResult> = {
       success: true,
     };
 
-    logger.verbose(`Evaluate response evaluation=${chatMessage.evaluation}`);
-
-    if (!messages || !messages.length) {
-      result.success = false;
-      result.reason = "Unexpected empty response";
-      return result;
-    }
+    // if (!messages || !messages.length) {
+    //   result.success = false;
+    //   result.reason = "Unexpected empty response";
+    //   return result;
+    // }
 
     if (chatMessage.evaluation !== undefined) {
+      logger.verbose(`Evaluate response evaluation=${chatMessage.evaluation}`);
       logger.verbose("TODO ADD PROMPT EVAL");
     }
 

@@ -208,7 +208,7 @@ export class ChatHandler {
       appId: this.appId,
       agentId: uuid(),
       settings: {
-        ttsEnabled: false,
+        // ttsEnabled: false,
         language,
       } as any,
     });

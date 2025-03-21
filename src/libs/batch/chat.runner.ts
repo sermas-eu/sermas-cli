@@ -6,7 +6,6 @@ import {
   MessageSourceUIContent,
 } from "../chat/chat-handler";
 import logger from "../logger";
-import { fail } from "../util";
 import { ChatBatch, ChatBatchMessage } from "./loader.dto";
 import { ChatBatchRunnerResult } from "./runner.dto";
 
@@ -51,8 +50,15 @@ export class ChatBatchRunner {
     this.logMessage("user", message);
   }
 
-  async handleSelect(messages: ChatMessage[], chatMessage: ChatBatchMessage) {
+  async handleSelect(
+    messages: ChatMessage[],
+    chatMessage: ChatBatchMessage,
+  ): Promise<Partial<ChatBatchRunnerResult>> {
     logger.verbose(`Select message from buttons select=${chatMessage.select}`);
+
+    const result: Partial<ChatBatchRunnerResult> = {
+      success: true,
+    };
 
     const buttons = messages
       .filter(
@@ -65,8 +71,10 @@ export class ChatBatchRunner {
       )
       .flat();
     if (!buttons.length) {
-      logger.warn(`Cannot select, no buttons found`);
-      return fail();
+      return {
+        success: false,
+        reason: `Cannot select, no buttons found`,
+      };
     }
 
     const selections = buttons
@@ -91,11 +99,17 @@ export class ChatBatchRunner {
       .filter((response) => response !== undefined);
 
     if (!selections.length) {
-      logger.warn(`Response option not found for select=${chatMessage.select}`);
-      return fail();
+      return {
+        success: false,
+        reason: `Response option not found for select=${chatMessage.select}`,
+      };
     }
 
     await this.sendChatMessage(selections[0]);
+
+    return {
+      success: true,
+    };
   }
 
   async handlePrompt(messages: ChatMessage[], chatMessage: ChatBatchMessage) {
@@ -125,14 +139,22 @@ export class ChatBatchRunner {
     return result;
   }
 
-  async run() {
-    logger.info(`------------------------------------------`);
-    logger.info(`Running batch ${this.chatBatch.name}`);
-
+  private formatResult(
+    res?: Partial<ChatBatchRunnerResult>,
+  ): ChatBatchRunnerResult {
     const result: ChatBatchRunnerResult = {
       name: this.chatBatch.name,
       success: true,
     };
+    res = res || {};
+    result.success = res.success === false ? false : true;
+    result.reason = res.reason;
+    return result;
+  }
+
+  async run() {
+    logger.info(`------------------------------------------`);
+    logger.info(`Running batch ${this.chatBatch.name}`);
 
     let messages: ChatMessage[] = [];
 
@@ -144,7 +166,10 @@ export class ChatBatchRunner {
       if (chatMessage.message !== undefined) {
         await this.sendChatMessage(chatMessage.message);
       } else if (chatMessage.select !== undefined) {
-        await this.handleSelect(messages, chatMessage);
+        const res = await this.handleSelect(messages, chatMessage);
+        if (res.success === false) {
+          return this.formatResult(res);
+        }
       } else if (chatMessage.prompt !== undefined) {
         await this.handlePrompt(messages, chatMessage);
       }
@@ -153,16 +178,13 @@ export class ChatBatchRunner {
       this.logMessages(messages);
 
       const res = await this.evaluateResponse(messages, chatMessage);
-      if (!res.success) {
-        return {
-          ...result,
-          ...res,
-        };
+      if (res.success === false) {
+        return this.formatResult(res);
       }
 
       logger.verbose("---");
     }
 
-    return result;
+    return this.formatResult();
   }
 }

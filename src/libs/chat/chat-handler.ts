@@ -22,12 +22,12 @@ type MessageSource = {
   completed?: boolean;
 };
 
-type MessageSourceUIContent = MessageSource & {
+export type MessageSourceUIContent = MessageSource & {
   type: "ui";
   ui: UIContentDto;
 };
 
-type MessageSourceDialogueMessage = MessageSource & {
+export type MessageSourceDialogueMessage = MessageSource & {
   type: "message";
   message: DialogueMessageDto;
 };
@@ -42,7 +42,7 @@ export type ChatHandlerArgs = {
   appId: string;
   sessionId?: string;
   language?: string;
-  onMessage: (messages: ChatMessage[]) => Promise<void> | void;
+  onMessage?: (messages: ChatMessage[]) => Promise<void> | void;
 };
 
 type QueueItem = {
@@ -100,7 +100,7 @@ export class ChatHandler {
         this.queue[ev.requestId].status = ev.status;
         this.queue[ev.requestId].completed =
           ev.status === "ended" || ev.status === "cancelled";
-        logger.verbose(`Status changed ${ev.status} requestId=${ev.requestId}`);
+        logger.debug(`Status changed ${ev.status} requestId=${ev.requestId}`);
       },
     );
 
@@ -128,7 +128,7 @@ export class ChatHandler {
 
         if (message.actor !== "agent") return;
 
-        logger.verbose(`Got dialogue message [${message.text}]`);
+        logger.debug(`Got dialogue message [${message.text}]`);
         this.addMessage(message);
       },
     );
@@ -193,7 +193,7 @@ export class ChatHandler {
           return;
       }
 
-      logger.verbose(`Got UI content type=${ev.contentType}`);
+      logger.debug(`Got UI content type=${ev.contentType}`);
       this.addMessage(message);
     });
 
@@ -246,7 +246,7 @@ export class ChatHandler {
 
     const waitTimesMax = 10;
 
-    return new Promise<void>(async (resolve) => {
+    return new Promise<ChatMessage[]>(async (resolve) => {
       let sameMessage = 0;
       let waitTimes = 0;
       while (this.isWaiting) {
@@ -256,6 +256,7 @@ export class ChatHandler {
           .filter((q) => q.completed)
           .reduce((list, q) => [...list, ...q.messages], [])
           .flat()
+          .filter((m) => m !== undefined)
           .filter((m) => m.actor === "agent")
           .sort((a, b) => (new Date(a.ts) > new Date(b.ts) ? 1 : -1));
 
@@ -298,17 +299,16 @@ export class ChatHandler {
           this.lastMessageReceived = ts;
         }
 
-        logger.verbose(
+        logger.debug(
           `Waiting for response (${sameMessage + 1} / ${sameMessageMax}) ..`,
         );
       }
 
-      logger.verbose(`Response received`);
+      logger.debug(`Response received`);
       this.isWaiting = false;
 
-      this.process();
-
-      resolve();
+      const messages = this.process();
+      resolve(messages);
     });
   }
 
@@ -363,16 +363,22 @@ export class ChatHandler {
         .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1));
     }
 
+    let messages: ChatMessage[] = [];
+
     if (hasNewMessages) {
-      this.onMessage(this.getMessages());
+      messages = this.getMessages();
+      this.onMessage && this.onMessage(messages);
+      return messages;
     }
+
+    return messages;
   }
 
   addMessage(message: ChatMessage) {
     const requestId = message.requestId;
 
     if (!this.queue[requestId]) {
-      logger.verbose(`Tracking requestId=${requestId}`);
+      logger.debug(`Tracking requestId=${requestId}`);
       this.queue[requestId] = {
         requestId,
         completed: message.source.completed === true,

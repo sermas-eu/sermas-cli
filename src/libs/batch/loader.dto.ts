@@ -2,7 +2,11 @@ import { AppSettingsDto } from "@sermas/api-client";
 
 export type ChatBatchMessage = {
   message: string;
+  // create a message using LLM
+  prompt?: string;
+  // evaluate message response with LLM
   evaluation?: string;
+  // select an items from an enumerable response (e.g. UI contents like buttons)
   select?: string | number;
 };
 

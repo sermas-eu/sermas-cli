@@ -6,6 +6,7 @@ import {
   MessageSourceUIContent,
 } from "../chat/chat-handler";
 import logger from "../logger";
+import { fail } from "../util";
 import { ChatBatch, ChatBatchMessage } from "./loader.dto";
 import { ChatBatchRunnerResult } from "./runner.dto";
 

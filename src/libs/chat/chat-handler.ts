@@ -177,15 +177,17 @@ export class ChatHandler {
           message.text = ev.content.url.toString();
           break;
         case "buttons":
-          message.text = (ev.content.list as ButtonDto[])
-            .map((b: ButtonDto) => `- ${b.label}`)
-            .join("\n");
+          message.text =
+            "\n" +
+            (ev.content.list as ButtonDto[])
+              .map((b: ButtonDto) => `- ${b.label}`)
+              .join("\n");
           break;
         case "quiz":
           const quiz = ev.content as QuizContentDto;
-          message.text = `${quiz.question}\n${quiz.answers.map(
-            (a) => `- ${a.answer}`,
-          )}`;
+          message.text = `${quiz.question}\n${quiz.answers
+            .map((a) => `- ${a.answer}`)
+            .join("\n")}`;
           break;
         // case "clear-screen":
         //   return;

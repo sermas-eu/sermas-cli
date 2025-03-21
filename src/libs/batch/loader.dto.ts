@@ -8,6 +8,8 @@ export type ChatBatchMessage = {
   evaluation?: string;
   // select an items from an enumerable response (e.g. UI contents like buttons)
   select?: string | number;
+  // await for response
+  wait?: number;
 };
 
 export type ChatBatch = {

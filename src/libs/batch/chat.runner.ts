@@ -14,6 +14,8 @@ export class ChatBatchRunner {
   private chatHandler: ChatHandler;
   private appApi: AppApi;
 
+  private messages: ChatMessage[] = [];
+
   constructor(
     private readonly api: CliApi,
     private readonly chatBatch: ChatBatch,
@@ -52,6 +54,20 @@ export class ChatBatchRunner {
   async sendChatMessage(message: string) {
     await this.chatHandler.sendChat(message);
     this.logMessage("user", message);
+
+    this.messages.push({
+      appId: this.chatBatch.appId,
+      sessionId: this.chatHandler.getSessionId(),
+
+      actor: "user",
+      text: message,
+
+      shown: true,
+      source: {
+        type: "message",
+        message: undefined,
+      },
+    });
   }
 
   async handleSelect(
@@ -190,6 +206,7 @@ ${chatMessage.evaluation}`,
     const result: ChatBatchRunnerResult = {
       name: this.chatBatch.name,
       success: true,
+      messages: this.messages,
     };
     res = res || {};
     result.success = res.success === false ? false : true;
@@ -205,6 +222,9 @@ ${chatMessage.evaluation}`,
 
     messages = await this.chatHandler.waitResponse();
     this.logMessages(messages);
+
+    // track messages
+    this.messages.push(...messages);
 
     for (const chatMessage of this.chatBatch.chat) {
       // send plain text chat message

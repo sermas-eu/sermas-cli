@@ -329,6 +329,7 @@ export class ChatHandler {
       sessionId: this.sessionId,
       language: language || this.language || defaultLanguage,
     });
+
     if (res === null) return fail();
     return res;
   }

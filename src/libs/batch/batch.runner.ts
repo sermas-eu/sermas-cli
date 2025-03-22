@@ -12,8 +12,8 @@ type BatchRunnerStats = {
   id: string;
   createdAt: Date;
   batchs: {
-    batch: ChatBatch;
     result: ChatBatchRunnerResult;
+    batch: ChatBatch;
   }[];
 };
 

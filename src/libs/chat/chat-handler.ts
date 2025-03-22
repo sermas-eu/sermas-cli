@@ -78,6 +78,10 @@ export class ChatHandler {
     this.onMessage = args.onMessage;
   }
 
+  getSessionId() {
+    return this.sessionId;
+  }
+
   quit() {
     this.end = true;
   }

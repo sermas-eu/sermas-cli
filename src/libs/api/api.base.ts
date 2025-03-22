@@ -5,6 +5,7 @@ import { CliConfigHandler } from "./config";
 import { CliCredentialsHandler } from "./credentials";
 
 import {
+  AgentEvaluatePromptDto,
   AppModuleConfigDto,
   CreatePlatformAppDto,
   DialogueMessageDto,
@@ -272,6 +273,14 @@ export class BaseApi {
     return await this.requestWrapper((client: SermasApiClient) =>
       client.api.ui.adminSaveAsset({
         formData: this.createFormData(model, file),
+      }),
+    );
+  }
+
+  async sendPrompt(requestBody: AgentEvaluatePromptDto) {
+    return await this.requestWrapper((client: SermasApiClient) =>
+      client.api.session.prompt({
+        requestBody,
       }),
     );
   }

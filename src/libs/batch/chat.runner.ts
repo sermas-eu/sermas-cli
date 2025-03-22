@@ -1,4 +1,5 @@
 import { ButtonsUIContentDto, sleep } from "@sermas/api-client";
+import { AppApi } from "../api/api.app";
 import { CliApi } from "../api/api.cli";
 import {
   ChatHandler,
@@ -11,6 +12,7 @@ import { ChatBatchRunnerResult } from "./runner.dto";
 
 export class ChatBatchRunner {
   private chatHandler: ChatHandler;
+  private appApi: AppApi;
 
   constructor(
     private readonly api: CliApi,
@@ -34,6 +36,8 @@ export class ChatBatchRunner {
     });
 
     await this.chatHandler.init();
+
+    this.appApi = await this.api.getAppClient(this.chatBatch.appId);
   }
 
   logMessage(role: "user" | "agent", message: string, date?: Date | string) {
@@ -56,10 +60,6 @@ export class ChatBatchRunner {
   ): Promise<Partial<ChatBatchRunnerResult>> {
     logger.verbose(`Select message from buttons select=${chatMessage.select}`);
 
-    const result: Partial<ChatBatchRunnerResult> = {
-      success: true,
-    };
-
     const buttons = messages
       .filter(
         (m) =>
@@ -71,10 +71,10 @@ export class ChatBatchRunner {
       )
       .flat();
     if (!buttons.length) {
-      return {
+      return this.formatResult({
         success: false,
         reason: `Cannot select, no buttons found`,
-      };
+      });
     }
 
     const selections = buttons
@@ -99,43 +99,89 @@ export class ChatBatchRunner {
       .filter((response) => response !== undefined);
 
     if (!selections.length) {
-      return {
+      return this.formatResult({
         success: false,
         reason: `Response option not found for select=${chatMessage.select}`,
-      };
+      });
     }
 
     await this.sendChatMessage(selections[0]);
 
-    return {
-      success: true,
-    };
+    return this.formatResult();
   }
 
-  async handlePrompt(messages: ChatMessage[], chatMessage: ChatBatchMessage) {
-    logger.verbose("TODO HANDLE PROMPT");
-  }
-
-  async evaluateResponse(
-    messages: ChatMessage[],
+  async handlePrompt(
     chatMessage: ChatBatchMessage,
-  ) {
-    const result: Partial<ChatBatchRunnerResult> = {
-      success: true,
-    };
+  ): Promise<ChatBatchRunnerResult & { message: string | undefined }> {
+    logger.verbose(`Handle prompt=${chatMessage.prompt}`);
 
-    // if (!messages || !messages.length) {
-    //   result.success = false;
-    //   result.reason = "Unexpected empty response";
-    //   return result;
-    // }
+    const res = await this.appApi.sendPrompt({
+      appId: this.chatBatch.appId,
+      sessionId: this.chatHandler.getSessionId(),
+      prompt: `Based on HISTORY impersonate the user and create a request for the assistant following the description. 
+## DESCRIPTION
+${chatMessage.prompt}`,
 
-    if (chatMessage.evaluation !== undefined) {
-      logger.verbose(`Evaluate response evaluation=${chatMessage.evaluation}`);
-      logger.verbose("TODO ADD PROMPT EVAL");
+      options: {
+        app: false,
+        history: true,
+        json: false,
+      },
+    });
+
+    const message = res && res.result ? res?.result?.toString() : undefined;
+
+    const result = this.formatResult();
+
+    if (!message) {
+      result.success = false;
+      result.reason = "Failed to generate prompt";
     }
 
-    return result;
+    return {
+      ...result,
+      message,
+    };
+  }
+
+  async evaluateResponse(chatMessage: ChatBatchMessage) {
+    if (chatMessage.evaluation === undefined) return this.formatResult();
+
+    logger.verbose(`Evaluate response evaluation=${chatMessage.evaluation}`);
+
+    const res = await this.appApi.sendPrompt({
+      appId: this.chatBatch.appId,
+      sessionId: this.chatHandler.getSessionId(),
+      prompt: `Analyze conversation HISTORY to check if EVALUATION is correctly met. 
+
+## Response format
+Answer in parsable JSON. Follow this structure, do not add notes or explanation.
+{
+  "success": boolean, // EVALUATION result if positive or negative
+  "reason": string, // Describe the motivation that made you decide in english
+}
+
+## EVALUATION
+${chatMessage.evaluation}`,
+
+      options: {
+        app: false,
+        history: true,
+        json: true,
+      },
+    });
+
+    // console.warn(res.result);
+    const result = res?.result as { success: boolean; reason: string };
+
+    if (result && result.success === false) {
+      return this.formatResult({
+        success: result.success,
+        reason: result.reason,
+      });
+    }
+
+    return this.formatResult();
   }
 
   private formatResult(
@@ -173,14 +219,18 @@ export class ChatBatchRunner {
           return this.formatResult(res);
         }
       } else if (chatMessage.prompt !== undefined) {
-        await this.handlePrompt(messages, chatMessage);
+        const res = await this.handlePrompt(chatMessage);
+        if (res.success === false) {
+          return res;
+        }
+        await this.sendChatMessage(res.message);
       }
 
       messages = await this.chatHandler.waitResponse();
       this.logMessages(messages);
 
-      const res = await this.evaluateResponse(messages, chatMessage);
-      if (res.success === false) {
+      const res = await this.evaluateResponse(chatMessage);
+      if (res?.success === false) {
         return this.formatResult(res);
       }
 

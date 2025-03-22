@@ -77,11 +77,11 @@ export class BatchRunner {
       await fs.mkdir(outputPath, { recursive: true });
     }
 
-    let resultsDir = `${outputPath}/${stats.id}`;
-    await fs.mkdir(resultsDir, { recursive: true });
+    const resultsBaseDir = `${outputPath}/${stats.id}`;
+    await fs.mkdir(resultsBaseDir, { recursive: true });
 
     for (const item of stats.batchs) {
-      resultsDir = `${resultsDir}${
+      const resultsDir = `${resultsBaseDir}${
         item.batch.appId ? "/" + item.batch.appId : ""
       }`;
       await fs.mkdir(resultsDir, { recursive: true });

@@ -1,34 +1,60 @@
-import { AppSettingsDto, PlatformAppDto } from "@sermas/api-client";
+import { PlatformAppDto } from "@sermas/api-client";
 import { glob } from "glob";
 import logger from "../logger";
 import { fileExists, loadYAML } from "../util";
 import { ChatBatch } from "./loader.dto";
 
-export const loadChatBatch = async (dir: string) => {
+const getAppYaml = async (dir: string) => {
+  const appYaml = `${dir}/app.yaml`;
+  const app = await loadYAML<PlatformAppDto>(appYaml);
+  return app || undefined;
+};
+
+const getParentDir = (dir: string) => {
+  return dir.split("/").slice(0, -1).join("/");
+};
+
+export const loadChatBatch = async (dir: string, skipRepository = false) => {
+  // load repository
+
+  if (!skipRepository) {
+    const repositoryAppPaths = await glob(`${dir}/**/tests/`);
+    if (repositoryAppPaths.length) {
+      const definitions: ChatBatch[] = [];
+      for (const repositoryAppPath of repositoryAppPaths) {
+        const tests = await loadChatBatch(
+          getParentDir(repositoryAppPath),
+          true,
+        );
+        definitions.push(...(tests || []));
+      }
+      return definitions;
+    }
+  }
+
   let testsDir = dir;
   let appId: string;
-  let settings: Partial<AppSettingsDto>;
+  let app: PlatformAppDto | undefined;
 
+  // load single app or tests
   const hasTestsDir = await fileExists(`${dir}/tests`);
   if (hasTestsDir) {
     const parts = dir.split("/");
     parts.pop();
     appId = parts.pop();
 
-    const appYaml = `${dir}/app.yaml`;
-    const app = await loadYAML<PlatformAppDto>(appYaml);
-
-    //   if (!app) {
-    //     appYaml = `${dir}/app.yml`;
-    //     app = await loadYAML<PlatformAppDto>(appYaml);
-    //   }
-
-    appId = app?.appId;
-    settings = app?.settings;
+    app = await getAppYaml(dir);
     testsDir = `${dir}/tests`;
+  } else {
+    // try load app.yaml from parent
+    app = await getAppYaml(getParentDir(dir));
   }
 
-  const list = await glob(`${testsDir}/**/*.yaml`);
+  appId = app?.appId || appId;
+  const settings = app?.settings;
+
+  logger.verbose(`Loading batch from ${testsDir}`);
+  const list = await glob(`${testsDir}/*.yaml`);
   const definitions: ChatBatch[] = [];
   for (const item of list) {
     const yaml = await loadYAML<ChatBatch>(item);

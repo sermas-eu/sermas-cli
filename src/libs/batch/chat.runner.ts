@@ -188,7 +188,10 @@ ${chatMessage.evaluation}`,
     });
 
     // console.warn(res.result);
-    const result = res?.result as { success: boolean; reason: string };
+    const result = res?.result as unknown as {
+      success: boolean;
+      reason: string;
+    };
 
     if (result && result.success === false) {
       return this.formatResult({

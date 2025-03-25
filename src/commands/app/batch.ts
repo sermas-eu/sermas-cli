@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { BatchRunner } from "../../libs/batch/batch.runner";
 import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger";
 import { fail } from "../../libs/util";
 
 export default {
@@ -24,6 +25,12 @@ export default {
 
     const batchRunner = new BatchRunner(api, baseDir, outputPath);
     const stats = await batchRunner.run(batchName);
+
+    stats.batchs.forEach((b) => {
+      logger[b.result.success ? "info" : "warn"](
+        `Batch ${b.result.name} ${b.result.success ? "OK" : "FAILED"}`,
+      );
+    });
 
     const success =
       stats.batchs.filter((r) => r.result.success === false).length === 0;

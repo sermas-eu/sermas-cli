@@ -35,7 +35,7 @@ export class BatchRunner {
 
     for (const chatBatch of chatBatchs) {
       if (batchName && batchName !== chatBatch.name) {
-        logger.info(`Skip ${chatBatch.name}`);
+        logger.verbose(`Skip ${chatBatch.name}`);
         continue;
       }
 

@@ -234,7 +234,9 @@ ${chatMessage.evaluation}`,
       if (chatMessage.wait !== undefined) {
         logger.info(`wait ${chatMessage.wait} seconds`);
         await sleep(chatMessage.wait * 1000);
-      } else if (chatMessage.message !== undefined) {
+      }
+
+      if (chatMessage.message !== undefined) {
         await this.sendChatMessage(chatMessage.message);
       } else if (chatMessage.select !== undefined) {
         const res = await this.handleSelect(messages, chatMessage);

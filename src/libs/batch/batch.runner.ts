@@ -24,6 +24,28 @@ export class BatchRunner {
     private readonly outputPath?: string,
   ) {}
 
+  private matchName(chatBatch: ChatBatch, batchName?: string) {
+    // match all if empty
+    if (!batchName) return true;
+
+    // use pattern matching
+    if (batchName.indexOf("*") > -1) {
+      if (!chatBatch.filePath.match(new RegExp(batchName, "i"))) {
+        logger.verbose(`Skip pattern ${chatBatch.name}`);
+        return false;
+      }
+      logger.verbose(`Match pattern ${chatBatch.name} (${chatBatch.filePath})`);
+      return true;
+    }
+
+    if (batchName !== chatBatch.name) {
+      logger.verbose(`Skip match ${chatBatch.name}`);
+      return false;
+    }
+    logger.verbose(`Match name ${chatBatch.name}`);
+    return true;
+  }
+
   async run(batchName: string) {
     const chatBatchs = await loadChatBatch(this.baseDir);
 
@@ -34,10 +56,8 @@ export class BatchRunner {
     };
 
     for (const chatBatch of chatBatchs) {
-      if (batchName && batchName !== chatBatch.name) {
-        logger.verbose(`Skip ${chatBatch.name}`);
-        continue;
-      }
+      const matches = this.matchName(chatBatch, batchName);
+      if (!matches) continue;
 
       const chatBatchRunner = new ChatBatchRunner(this.api, chatBatch);
       await chatBatchRunner.init();

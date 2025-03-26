@@ -88,5 +88,5 @@ export const loadChatBatch = async (dir: string, skipRepository = false) => {
     definitions.push(yaml);
   }
   logger.verbose(`Found ${definitions.length} files`);
-  return definitions;
+  return definitions.sort((a, b) => (a.name > b.name ? 1 : -1));
 };

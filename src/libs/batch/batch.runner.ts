@@ -3,6 +3,7 @@ import { ulid } from "ulid";
 import { CliApi } from "../api/api.cli";
 import logger from "../logger";
 import { fileExists, toYAML, writeFile } from "../util";
+import { BatchRunnerOptions } from "./batch.runner.dto";
 import { ChatBatchRunner } from "./chat.runner";
 import { loadChatBatch } from "./loader";
 import { ChatBatch } from "./loader.dto";
@@ -21,7 +22,7 @@ export class BatchRunner {
   constructor(
     private readonly api: CliApi,
     private readonly baseDir: string,
-    private readonly outputPath?: string,
+    private readonly options: BatchRunnerOptions = {},
   ) {}
 
   private matchName(chatBatch: ChatBatch, batchName?: string) {
@@ -59,7 +60,11 @@ export class BatchRunner {
       const matches = this.matchName(chatBatch, batchName);
       if (!matches) continue;
 
-      const chatBatchRunner = new ChatBatchRunner(this.api, chatBatch);
+      const chatBatchRunner = new ChatBatchRunner(
+        this.api,
+        chatBatch,
+        this.options,
+      );
       await chatBatchRunner.init();
 
       const res = await chatBatchRunner.run();
@@ -71,14 +76,10 @@ export class BatchRunner {
         result: res,
       });
 
-      if (this.outputPath) {
-        await this.saveResults(this.outputPath, stats);
-      }
+      await this.saveResults(stats);
     }
 
-    if (this.outputPath) {
-      await this.saveResults(this.outputPath, stats);
-    }
+    await this.saveResults(stats);
 
     return stats;
   }
@@ -91,7 +92,11 @@ export class BatchRunner {
     }
   }
 
-  async saveResults(outputPath: string, stats: BatchRunnerStats) {
+  async saveResults(stats: BatchRunnerStats) {
+    if (!this.options?.outputPath) return;
+
+    const outputPath = this.options?.outputPath;
+
     const exists = await fileExists(outputPath);
     if (!exists) {
       await fs.mkdir(outputPath, { recursive: true });

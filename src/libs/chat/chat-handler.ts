@@ -113,7 +113,7 @@ export class ChatHandler {
         if (ev.sessionId !== this.sessionId) return;
 
         if (ev.record.closedAt) {
-          logger.info(`Session closed, exiting chat`);
+          logger.verbose(`Session closed, exiting chat`);
           this.quit();
         }
       },
@@ -224,7 +224,7 @@ export class ChatHandler {
       return null;
     }
 
-    logger.info(`Using sessionId=${session.sessionId}`);
+    logger.verbose(`Using sessionId=${session.sessionId}`);
     return session.sessionId;
   }
 

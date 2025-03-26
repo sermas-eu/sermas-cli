@@ -10,12 +10,17 @@ export default {
       .description("Run chats in batch to validate interactions")
       .option("-n, --name <string>", `Name of the batch to run`)
       .option("-o, --output <string>", `Output path where to store results`)
+      .option("-s, --show-chat", `Show chat messages`)
       .argument("[path]", `Path to load chat definitions`);
   },
 
   run: async ({ args, flags, api }: CommandParams) => {
     const baseDir = args[0];
-    const { name: batchName, output: outputPath } = flags;
+    const {
+      name: batchName,
+      output: outputPath,
+      showChat: showChatLogs,
+    } = flags;
 
     if (!baseDir) {
       return fail(
@@ -23,13 +28,15 @@ export default {
       );
     }
 
-    const batchRunner = new BatchRunner(api, baseDir, outputPath);
+    const batchRunner = new BatchRunner(api, baseDir, {
+      outputPath,
+      showChatLogs,
+    });
     const stats = await batchRunner.run(batchName);
 
     stats.batchs.forEach((b) => {
-      logger[b.result.success ? "info" : "warn"](
-        `Batch ${b.result.name} ${b.result.success ? "OK" : "FAILED"}`,
-      );
+      if (b.result.success) return;
+      logger.warn(`Batch ${b.result.name} FAILED: ${b.result.reason}`);
     });
 
     const success =

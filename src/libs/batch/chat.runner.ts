@@ -6,9 +6,11 @@ import {
   ChatMessage,
   MessageSourceUIContent,
 } from "../chat/chat-handler";
+import { colorize } from "../colors";
 import logger from "../logger";
 import { ChatBatch, ChatBatchMessage } from "./loader.dto";
 import { ChatBatchRunnerResult } from "./runner.dto";
+import { ChatBatchOptions } from "./chat.runner.dto";
 
 export class ChatBatchRunner {
   private chatHandler: ChatHandler;
@@ -19,6 +21,7 @@ export class ChatBatchRunner {
   constructor(
     private readonly api: CliApi,
     private readonly chatBatch: ChatBatch,
+    private readonly options: ChatBatchOptions = {},
   ) {}
 
   async init() {
@@ -43,8 +46,12 @@ export class ChatBatchRunner {
   }
 
   logMessage(role: "user" | "agent", message: string, date?: Date | string) {
+    if (this.options.showChatLogs !== true) return;
+
     date = date ? new Date(date) : new Date();
-    logger.info(`[${role}] ${date.toTimeString().split(" ")[0]} ${message}`);
+    const text = `${date.toTimeString().split(" ")[0]} [${role}] ${message}`;
+
+    logger.info(colorize(text, role === "user" ? "FgCyan" : "FgGray"));
   }
 
   logMessages(messages: ChatMessage[]) {
@@ -218,8 +225,8 @@ ${chatMessage.evaluation}`,
   }
 
   async run() {
-    logger.info(`------------------------------------------`);
-    logger.info(`Running batch ${this.chatBatch.name}`);
+    logger.verbose(`------------------------------------------`);
+    logger.info(`Running batch '${this.chatBatch.name}'`);
 
     let messages: ChatMessage[] = [];
 
@@ -232,7 +239,7 @@ ${chatMessage.evaluation}`,
     for (const chatMessage of this.chatBatch.chat) {
       // send plain text chat message
       if (chatMessage.wait !== undefined) {
-        logger.info(`wait ${chatMessage.wait} seconds`);
+        logger.verbose(`wait ${chatMessage.wait} seconds`);
         await sleep(chatMessage.wait * 1000);
       }
 

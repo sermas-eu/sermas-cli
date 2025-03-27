@@ -8,9 +8,9 @@ import {
 } from "../chat/chat-handler";
 import { colorize } from "../colors";
 import logger from "../logger";
+import { ChatBatchOptions } from "./chat.runner.dto";
 import { ChatBatch, ChatBatchMessage } from "./loader.dto";
 import { ChatBatchRunnerResult } from "./runner.dto";
-import { ChatBatchOptions } from "./chat.runner.dto";
 
 export class ChatBatchRunner {
   private chatHandler: ChatHandler;
@@ -230,6 +230,12 @@ ${chatMessage.evaluation}`,
 
     let messages: ChatMessage[] = [];
 
+    const initialWait = this.chatBatch.wait || 4;
+    if (initialWait) {
+      logger.verbose(`initial wait ${initialWait} seconds`);
+      await sleep(initialWait * 1000);
+    }
+
     messages = await this.chatHandler.waitResponse();
     this.logMessages(messages);
 
@@ -257,6 +263,9 @@ ${chatMessage.evaluation}`,
         }
         await this.sendChatMessage(res.message);
       }
+
+      // just in case
+      await sleep(1000);
 
       messages = await this.chatHandler.waitResponse();
       this.logMessages(messages);

@@ -17,5 +17,6 @@ export type ChatBatch = {
   name: string;
   appId?: string;
   settings?: Partial<AppSettingsDto>;
+  wait?: number;
   chat: ChatBatchMessage[];
 };

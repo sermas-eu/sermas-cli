@@ -2,4 +2,7 @@
 import { CliProgram } from "./cli";
 import logger from "./libs/logger";
 
-new CliProgram().init().catch((e) => logger.error(e.stack));
+const cliProgram = new CliProgram();
+const logStack = (e) => logger.error(e.stack);
+cliProgram.init().catch(logStack);
+cliProgram.parse().catch(logStack);

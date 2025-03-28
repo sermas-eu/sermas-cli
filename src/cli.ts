@@ -1,4 +1,4 @@
-import { Command, Option } from "commander";
+import { Command, Option, ParseOptions } from "commander";
 import * as fs from "fs/promises";
 import { glob } from "glob";
 import inquirer, { Answers } from "inquirer";
@@ -37,6 +37,7 @@ export class CliProgram {
   );
 
   private readonly cliApi = new CliApi(this.config, this.credentials, baseUrl);
+  private readonly program = new Command();
 
   constructor() {}
 
@@ -51,8 +52,7 @@ export class CliProgram {
     logger.debug(`Ensuring config path exists at ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
 
-    const program = new Command();
-    program
+    this.program
       .name(CLI_NAME)
       .version(CLI_VERSION)
       .description("Manage and interact with the SERMAS Toolkit API")
@@ -138,23 +138,23 @@ export class CliProgram {
 
       // Load commands
       await this.buildProgram({
-        program,
-        command: program,
+        program: this.program,
+        command: this.program,
         leaf: tree,
       });
     }
 
-    program
+    this.program
       .command("docs-gen")
       .description("generate markdown documentation")
       .action(async () => {
         await fs.mkdir("./docs", { recursive: true });
-        const filename = `./docs/${program.name()}.md`;
-        const output = generateDocs(program);
+        const filename = `./docs/${this.program.name()}.md`;
+        const output = generateDocs(this.program);
         await fs.writeFile(filename, output);
       });
 
-    program
+    this.program
       .command("completion")
       .description("generate bash completion")
       .action(async () => {
@@ -186,8 +186,10 @@ export class CliProgram {
         const options = subcommand ? Object.keys(subcommand) : [];
         printOptions(options);
       });
+  }
 
-    program.parse();
+  async parse(argv?: readonly string[], options?: ParseOptions) {
+    this.program.parse(argv, options);
   }
 
   async importModule(modulePath: string, failSilently = false) {

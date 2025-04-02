@@ -63,7 +63,11 @@ export class BatchRunner {
         if (!matches) continue;
         let originalApp: PlatformAppDto;
         if (modifiedSettings) {
-          // Overriding some app settings
+          logger.debug(
+            `Overriding app ${
+              chatBatch.appId
+            } with the following settings: ${JSON.stringify(modifiedSettings)}`,
+          );
           originalApp = await this.api.loadApp(chatBatch.appId);
           const modifiedApp = structuredClone(originalApp);
           modifiedApp.settings.llm = {

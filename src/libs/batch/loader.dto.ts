@@ -19,4 +19,5 @@ export type ChatBatch = {
   settings?: Partial<AppSettingsDto>;
   wait?: number;
   chat: ChatBatchMessage[];
+  settingsOverrides?: Partial<AppSettingsDto>[];
 };

@@ -57,23 +57,18 @@ export class BatchRunner {
       batchs: [],
     };
 
-    const overrides: Array<AppSettingsDto | null> = [
-      null,
-      { avatar: "Anna", background: "Milkyway" },
-    ];
-
-    for (const settingOverrides of overrides) {
-      for (const chatBatch of chatBatchs) {
+    for (const chatBatch of chatBatchs) {
+      for (const modifiedSettings of chatBatch.settingsOverrides || [null]) {
         const matches = this.matchName(chatBatch, batchName);
         if (!matches) continue;
         let originalApp: PlatformAppDto;
-        if (settingOverrides) {
+        if (modifiedSettings) {
           // Overriding some app settings
           originalApp = await this.api.loadApp(chatBatch.appId);
           const modifiedApp = structuredClone(originalApp);
           modifiedApp.settings.llm = {
             ...modifiedApp.settings.llm,
-            ...(settingOverrides?.llm || {}),
+            ...(modifiedSettings.llm || {}),
           };
           await this.api.updateApp(modifiedApp);
         }
@@ -96,7 +91,7 @@ export class BatchRunner {
 
         await this.saveResults(stats);
 
-        if (settingOverrides && originalApp) {
+        if (modifiedSettings && originalApp) {
           // Restoring original app settings
           this.api.updateApp(originalApp);
           originalApp = undefined;

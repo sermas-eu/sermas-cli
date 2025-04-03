@@ -8,6 +8,7 @@ import { ChatBatchRunner } from "./chat.runner";
 import { loadChatBatch } from "./loader";
 import { ChatBatch } from "./loader.dto";
 import { ChatBatchRunnerResult } from "./runner.dto";
+import { AppSettingsDto, PlatformAppDto } from "@sermas/api-client";
 
 type BatchRunnerStats = {
   id: string;
@@ -57,26 +58,49 @@ export class BatchRunner {
     };
 
     for (const chatBatch of chatBatchs) {
-      const matches = this.matchName(chatBatch, batchName);
-      if (!matches) continue;
+      for (const modifiedSettings of chatBatch.settingsOverrides || [null]) {
+        const matches = this.matchName(chatBatch, batchName);
+        if (!matches) continue;
+        let originalApp: PlatformAppDto;
+        if (modifiedSettings) {
+          logger.debug(
+            `Overriding app ${
+              chatBatch.appId
+            } with the following settings: ${JSON.stringify(modifiedSettings)}`,
+          );
+          originalApp = await this.api.loadApp(chatBatch.appId);
+          const modifiedApp = structuredClone(originalApp);
+          modifiedApp.settings.llm = {
+            ...modifiedApp.settings.llm,
+            ...(modifiedSettings.llm || {}),
+          };
+          await this.api.updateApp(modifiedApp);
+        }
 
-      const chatBatchRunner = new ChatBatchRunner(
-        this.api,
-        chatBatch,
-        this.options,
-      );
-      await chatBatchRunner.init();
+        const chatBatchRunner = new ChatBatchRunner(
+          this.api,
+          chatBatch,
+          this.options,
+        );
+        await chatBatchRunner.init();
 
-      const res = await chatBatchRunner.run();
-      if (!res.success) {
-        logger.error(`Batch ${chatBatch.name} failed: ${res.reason}`);
+        const res = await chatBatchRunner.run();
+        if (!res.success) {
+          logger.error(`Batch ${chatBatch.name} failed: ${res.reason}`);
+        }
+        stats.batchs.push({
+          batch: chatBatch,
+          result: res,
+        });
+
+        await this.saveResults(stats);
+
+        if (modifiedSettings && originalApp) {
+          // Restoring original app settings
+          this.api.updateApp(originalApp);
+          originalApp = undefined;
+        }
       }
-      stats.batchs.push({
-        batch: chatBatch,
-        result: res,
-      });
-
-      await this.saveResults(stats);
     }
 
     await this.saveResults(stats);

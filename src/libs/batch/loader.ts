@@ -63,17 +63,9 @@ export const loadChatBatch = async (dir: string, skipRepository = false) => {
       continue;
     }
 
-    yaml.filePath = item;
-    yaml.name = item.split("/").pop().split(".").slice(0, -1).join(".");
-
     if (!yaml.appId) {
       yaml.appId = appId;
     }
-
-    yaml.settings = {
-      ...(settings || {}),
-      ...(yaml.settings || {}),
-    };
 
     if (!yaml.appId) {
       logger.warn(`appId is missing in file ${item}, skipping.`);
@@ -84,6 +76,13 @@ export const loadChatBatch = async (dir: string, skipRepository = false) => {
       logger.warn(`missing chat elements in file ${item}, skipping.`);
       continue;
     }
+
+    yaml.filePath = item;
+    yaml.name = item.split("/").pop().split(".").slice(0, -1).join(".");
+    yaml.settings = {
+      ...(settings || {}),
+      ...(yaml.settings || {}),
+    };
 
     definitions.push(yaml);
   }

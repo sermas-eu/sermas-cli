@@ -54,7 +54,11 @@ export const loadChatBatch = async (dir: string, skipRepository = false) => {
   const settings = app?.settings;
 
   logger.verbose(`Loading batch from ${testsDir}`);
-  const list = await glob(`${testsDir}/*.yaml`);
+  const list = [
+    ...(await glob(`${testsDir}/**/*.yaml`)),
+    ...(await glob(`${testsDir}/*.yaml`)),
+  ];
+
   const definitions: ChatBatch[] = [];
   for (const item of list) {
     const yaml = await loadYAML<ChatBatch>(item);

@@ -78,7 +78,7 @@ export default {
           sort: {
             createdAt: "asc",
           },
-          limit,
+          limit: limit < 1 ? 99999999 : limit,
         },
       });
     } catch (e) {

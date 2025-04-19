@@ -83,6 +83,10 @@ export const loadChatBatch = async (dir: string, skipRepository = false) => {
       continue;
     }
 
+    if (yaml.chat.filter((c) => c.evaluation).length === 0) {
+      logger.warn(`no evaluation field provided in file ${item}`);
+    }
+
     yaml.filePath = item;
     yaml.name = item.split("/").pop().split(".").slice(0, -1).join(".");
     yaml.settings = {

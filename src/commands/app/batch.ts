@@ -21,6 +21,7 @@ export default {
         `Name of the batch to run (can be repeated)`,
       )
       .option("-o, --output <string>", `Output path where to store results`)
+      .option("-f, --only-failed", `Store only failed results`)
       .option("-s, --show-chat", `Show chat messages`)
       .option("-p, --parallelize <number>", `Parallelize tests`, parseIntArg, 1)
       .argument("[path]", `Path to load chat definitions`);
@@ -32,6 +33,7 @@ export default {
       name: batchNames,
       output: outputPath,
       showChat: showChatLogs,
+      onlyFailed,
       parallelize,
     } = flags;
 
@@ -44,6 +46,7 @@ export default {
     const batchRunner = new BatchRunner(api, baseDir, {
       outputPath,
       showChatLogs,
+      onlyFailed,
     });
 
     let stats: BatchRunnerStats = undefined;

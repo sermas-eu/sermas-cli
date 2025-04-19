@@ -179,6 +179,13 @@ export class BatchRunner {
     await fs.mkdir(resultsBaseDir, { recursive: true });
 
     for (const item of stats.batchs) {
+      if (this.options?.onlyFailed === true) {
+        if (item.result?.success) {
+          logger.verbose(`Skipping storing successful test ${item.batch.name}`);
+          continue;
+        }
+      }
+
       const resultsDir = `${resultsBaseDir}${
         item.batch.appId ? "/" + item.batch.appId : ""
       }`;

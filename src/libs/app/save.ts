@@ -12,18 +12,25 @@ import logger from "../../libs/logger";
 import { readFile } from "../../libs/util";
 import { loadAppStructure, saveAppId, structureToApp } from "./structure";
 
-export const saveAppFromDirectory = async (data: {
+export type SaveAppFromDirOptions = {
+  skipUpload?: boolean;
+  importWebsites?: boolean;
+};
+
+type SaveAppFromDirParams = {
   filepath: string;
   jwt: KeycloakJwtTokenDto;
   api: CliApi;
   saveApp?: (app: PlatformAppDto) => Promise<any>;
-  skipUpload?: boolean;
-  importWebsites?: boolean;
-}) => {
-  const { filepath, jwt, api, skipUpload, importWebsites } = data;
+  options?: SaveAppFromDirOptions;
+};
+
+export const saveAppFromDirectory = async (data: SaveAppFromDirParams) => {
+  const { filepath, jwt, api } = data;
+  const options = data.options || {};
 
   const appStructure = await loadAppStructure(filepath);
-  const app = structureToApp(appStructure, importWebsites);
+  const app = structureToApp(appStructure, options.importWebsites);
 
   app.ownerId = app.ownerId || jwt.sub;
 
@@ -74,7 +81,7 @@ export const saveAppFromDirectory = async (data: {
   logger.info(`Application ${app.name} saved with id=${appId}`);
 
   // upload assets
-  if (appStructure.repository && skipUpload !== true) {
+  if (appStructure.repository && !options.skipUpload) {
     logger.debug(`Uploading repository resources`);
     for (const type in appStructure.repository) {
       if (!appStructure.repository[type]) continue;

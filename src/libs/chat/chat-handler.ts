@@ -250,7 +250,7 @@ export class ChatHandler {
     const waitFor = 1000;
     const sameMessageMax = 5;
 
-    const waitTimesMax = 10;
+    const waitTimesMax = 20;
 
     return new Promise<ChatMessage[]>(async (resolve) => {
       let sameMessage = 0;

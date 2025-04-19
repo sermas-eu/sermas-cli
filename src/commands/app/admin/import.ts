@@ -77,8 +77,10 @@ export default {
               await api.importApps([app], false);
               return app;
             },
-            skipUpload,
-            importWebsites,
+            options: {
+              skipUpload,
+              importWebsites,
+            },
           }),
         );
       } catch (e: any) {

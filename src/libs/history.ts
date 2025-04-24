@@ -15,7 +15,7 @@ export const formatHistory = (
     if (message.type !== undefined && message.type !== "message") {
       const line1 = `[${message.type}] ${message.content}`;
       messages.push(line1);
-      if (print) console.log(colors.magenta.italic(message));
+      if (print) console.log(colors.magenta.italic(line1));
       continue;
     }
 

@@ -105,6 +105,7 @@ export default {
       const max = d3.max(values);
       const min = d3.min(values);
       const count = d3.count(values);
+      if (!mean) continue; // Simple way to exclude string values
       results.push({
         label,
         mean,

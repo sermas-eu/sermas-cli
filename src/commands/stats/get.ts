@@ -5,14 +5,13 @@ import logger from "../../libs/logger";
 import { fail, writeFile } from "../../libs/util";
 
 const parseDateTime = (
-  since: string,
+  dateTime: string,
   acceptIntervalCodes: boolean = false,
 ): Date => {
-  let date = null;
-  if (!since) return date;
+  if (!dateTime) return null;
   if (acceptIntervalCodes) {
-    const interval = since.match(/^(\d+)([dhms])$/);
-    if (interval) {
+    const interval = dateTime.match(/^(\d+)([dhms])$/);
+    if (interval && interval.length) {
       const [, amount, unit] = interval;
       const multiplier = {
         d: 24 * 60 * 60 * 1000,
@@ -20,20 +19,19 @@ const parseDateTime = (
         m: 60 * 1000,
         s: 1000,
       }[unit];
-      date = new Date(Date.now() - parseInt(amount) * multiplier);
-    }
-  } else {
-    if (since.match(/^\d+$/)) {
-      date = new Date(parseInt(since));
-    } else {
-      try {
-        date = new Date(since);
-      } catch (e) {
-        logger.warning(`Failed to parse "${since}" to date: ${e}`);
-      }
+      return new Date(Date.now() - parseInt(amount) * multiplier);
     }
   }
-  return date;
+  if (dateTime.match(/^\d+$/)) {
+    return new Date(parseInt(dateTime));
+  } else {
+    try {
+      return new Date(dateTime);
+    } catch (e) {
+      logger.warning(`Failed to parse "${dateTime}" to date: ${e}`);
+    }
+  }
+  return null;
 };
 
 const writeResultsToCSV = async (results: any[], outputFile: string) => {

@@ -3,6 +3,7 @@ import { CommandParams } from "../../libs/dto/cli.dto";
 import { fail } from "../../libs/util";
 
 import { formatHistory } from "../../libs/history";
+import logger from "../../libs/logger";
 
 export default {
   setup: async (command: Command) => {
@@ -27,6 +28,14 @@ export default {
 
     const appApi = await api.getAppClient(appId);
     const appApiClient = appApi.getClient();
+
+    const session = await appApiClient.api.session.readSession({
+      sessionId,
+    });
+
+    logger.info(
+      `session settings ${JSON.stringify(session.settings || {}, null, 2)}`,
+    );
 
     const history = await appApiClient.api.dialogue.getChatHistory({
       sessionId,

@@ -3,8 +3,8 @@
 # Each module will have a client to access resources
 - moduleId: avatar
   # secret will be used as client secret. 
-  # Leave empty to generate on.
-  secret: null
+  # Leave empty (null) to generate on.
+  secret: client-secret
   # Supported modules
   # Each module has a set of permissions applied to its client.
   # The full list of available permissions is available at

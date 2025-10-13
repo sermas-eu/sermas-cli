@@ -4,7 +4,7 @@
 - moduleId: avatar
   # secret will be used as client secret. 
   # Leave empty (null) to generate on.
-  secret: client-secret
+  secret: 94e030ea12cf81933c8e8bd7c4ce088c88951e7df117739d
   # Supported modules
   # Each module has a set of permissions applied to its client.
   # The full list of available permissions is available at

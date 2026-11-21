@@ -1,8 +1,8 @@
 import * as fs from "fs/promises";
 import YAML from "js-yaml";
 import * as path from "path";
-import { v4 as uuidv4 } from "uuid";
-import logger from "./logger";
+import { randomUUID as uuidv4 } from "node:crypto";
+import logger from "./logger.js";
 
 export const uuid = () => uuidv4();
 
@@ -17,7 +17,8 @@ export const toData = (format: FileFormatType, output: unknown) =>
   format === "yaml" ? toYAML(output) : toJSON(output);
 
 export const quit = (message?: string, code?: number) => {
-  code === undefined ? 1 : code;
+  // quit ends normally (exit 0, info) unless given a code; fail() is the error path
+  code = code ?? 0;
   const isErr = code !== 0;
   if (message) {
     if (isErr) {
@@ -67,7 +68,7 @@ export const saveFile = async (
   format?: "json" | "yaml",
 ) => {
   format = format || getFileFormatType(filepath);
-  let content = "";
+  let content: string;
   if (format === "yaml") {
     content = toYAML(data);
   } else {
@@ -123,7 +124,9 @@ export const rmFile = async (file: string) => {
   try {
     await fs.unlink(file);
     return true;
-  } catch {}
+  } catch {
+    // missing already
+  }
   return false;
 };
 

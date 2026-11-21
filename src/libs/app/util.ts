@@ -1,5 +1,5 @@
 import * as path from "path";
-import { fileExists, loadFile } from "../../libs/util";
+import { fileExists, loadFile } from "../../libs/util.js";
 
 export const DataFileExtensions = ["yml", "yaml", "json"];
 

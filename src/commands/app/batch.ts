@@ -1,8 +1,11 @@
 import { Command } from "commander";
-import { BatchRunner, BatchRunnerStats } from "../../libs/batch/batch.runner";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-import { fail } from "../../libs/util";
+import {
+  BatchRunner,
+  BatchRunnerStats,
+} from "../../libs/batch/batch.runner.js";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import logger from "../../libs/logger.js";
+import { fail } from "../../libs/util.js";
 
 const parseIntArg = (value, previous) => {
   const val = parseInt(value || previous);

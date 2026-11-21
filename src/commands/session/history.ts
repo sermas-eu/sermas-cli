@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import { fail } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import { fail } from "../../libs/util.js";
 
-import { formatHistory } from "../../libs/history";
-import logger from "../../libs/logger";
+import { formatHistory } from "../../libs/history.js";
+import logger from "../../libs/logger.js";
 
 export default {
   setup: async (command: Command) => {

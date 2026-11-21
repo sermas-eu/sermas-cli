@@ -1,35 +1,21 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ES2020",
-      "dom"
-    ],
-    "target": "ES2020",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "declaration": true,
-    "outDir": "./dist",
-    "noEmit": false,
-    "importHelpers": false,
-    "noImplicitAny": false,
+    "lib": ["ES2023", "DOM"],
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node", "vitest/globals"],
+    "noEmit": true,
+    "strict": false,
     "noImplicitOverride": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "rootDir": "./src",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    // @sermas/api-client from its sources (sermas-api-client checkout beside this one)
+    "paths": {
+      "@sermas/api-client": ["../sermas-api-client/src/index.ts"]
+    }
   },
-  "exclude": [
-    "node_modules",
-    "__tests__"
-  ],
-  "include": [
-    "src/**/*.ts",
-    "src/**/**/*.ts",
-    "src/**.ts",
-  ],
-  "compileOnSave": false,
-  "ts-node": {
-    "require": [
-      "tsconfig-paths/register"
-    ]
-  }
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src/tpl"]
 }

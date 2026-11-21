@@ -1,8 +1,8 @@
 import { PlatformAppDto } from "@sermas/api-client";
 import { glob } from "glob";
-import logger from "../logger";
-import { fileExists, loadYAML } from "../util";
-import { ChatBatch } from "./loader.dto";
+import logger from "../logger.js";
+import { fileExists, loadYAML } from "../util.js";
+import { ChatBatch } from "./loader.dto.js";
 
 const getAppYaml = async (dir: string) => {
   const appYaml = `${dir}/app.yaml`;

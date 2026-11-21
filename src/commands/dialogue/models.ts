@@ -1,10 +1,6 @@
 import { Command } from "commander";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-
-const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
-const defaultLanguage = "en-GB";
-const defaultLLM = "chatgpt";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import logger from "../../libs/logger.js";
 
 export default {
   setup: async (command: Command) => {

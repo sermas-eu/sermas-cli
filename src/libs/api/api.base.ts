@@ -1,8 +1,8 @@
 import { jwtDecode } from "jwt-decode";
-import { KeycloakJwtTokenDto } from "../dto/keycloak.dto";
-import logger from "../logger";
-import { CliConfigHandler } from "./config";
-import { CliCredentialsHandler } from "./credentials";
+import { KeycloakJwtTokenDto } from "../dto/keycloak.dto.js";
+import logger from "../logger.js";
+import { CliConfigHandler } from "./config.js";
+import { CliCredentialsHandler } from "./credentials.js";
 
 import {
   AgentEvaluatePromptDto,

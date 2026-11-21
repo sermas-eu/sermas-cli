@@ -1,6 +1,6 @@
-import { Command, Option } from "commander";
-import { fail, quit } from "../../libs/util";
-import { CommandParams } from "../../libs/dto/cli.dto";
+import { Command } from "commander";
+import { fail, quit } from "../../libs/util.js";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
 
 export default {
   setup: async (command: Command) => {
@@ -9,10 +9,11 @@ export default {
 
   run: async ({ args, feature, flags, api }: CommandParams) => {
     const { output } = flags;
-    if (!output) return fail(
-      "No output format set. Please use `--json`, `--yaml` " +
-      "or `--output` global options"
-    );
+    if (!output)
+      return fail(
+        "No output format set. Please use `--json`, `--yaml` " +
+          "or `--output` global options",
+      );
     const apps = await api.listUserApps();
     if (apps === null) return fail("Failed to load apps");
     if (!apps.length) {
@@ -21,4 +22,3 @@ export default {
     return apps;
   },
 };
-

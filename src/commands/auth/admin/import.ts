@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { CommandParams } from "../../../libs/dto/cli.dto";
-import logger from "../../../libs/logger";
-import { fail, loadFile } from "../../../libs/util";
+import { CommandParams } from "../../../libs/dto/cli.dto.js";
+import logger from "../../../libs/logger.js";
+import { fail, loadFile } from "../../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {

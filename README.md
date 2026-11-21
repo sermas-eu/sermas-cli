@@ -1,36 +1,48 @@
 # SERMAS CLI
 
-**The readme is in progress. Please open an issue to report a problem or ask anything**
-
 The SERMAS CLI is designed to interface with the API for management tasks.
 
 ## Usage
 
 ```sh
-
-# help
-sermas-cli -h
-
-# login
-sermas-cli auth login
-
+sermas-cli -h                               # commands
+sermas-cli auth login --saveLocally admin   # asks for the password
+sermas-cli --json app list                  # global options go before the command
+sermas-cli app admin import ./apps          # app structures (app.yaml, repository/, ...)
+sermas-cli app admin export -i my-app out.json
 ```
 
-## development
+`BASE_URL` points at the API (`http://localhost:8080` by default), `CONFIG_DIR` at
+the config and credentials directory (`~/.sermas`).
 
-### add autocompletion
+## Development
 
+Node 24 (`nvm use`). `@sermas/api-client` is compiled from its sources: a
+`sermas-api-client` checkout beside this one (`API_CLIENT_DIR` for the tests).
+
+```sh
+npm ci
+npm start -- -h            # from the sources (tsx)
+npm run typecheck && npm run lint && npm test
+npm run build              # dist/, with the API client bundled in
+node dist/index.js -h
+make docker/build          # image, with the API client checkout as build context
 ```
+
+Commands are files under `src/commands/<group>/<name>.ts`, found at run time.
+
+### Autocompletion
+
+```sh
 # in ~/.bashrc
-
-alias sermas-cli='cd <sermas-cli path>/cli && ./cli-local.sh'
+alias sermas-cli='<sermas-cli path>/cli-local.sh'
 _sermas_completion()
 {
     local cur=${COMP_WORDS[COMP_CWORD]}
-    local opts=$(sermas completion "${COMP_CWORD}" $@)
+    local opts=$(sermas-cli completion "${COMP_CWORD}" $@)
     COMPREPLY=( $(compgen -W "${opts}" -- $cur) )
 }
-complete -F _sermas_completion sermas
+complete -F _sermas_completion sermas-cli
 ```
 
 ## License

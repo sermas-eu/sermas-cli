@@ -1,9 +1,9 @@
-import { saveAppFromDirectory } from "../../libs/app/save";
-import logger from "../../libs/logger";
+import { saveAppFromDirectory } from "../../libs/app/save.js";
+import logger from "../../libs/logger.js";
 import { Command } from "commander";
 import * as path from "path";
-import { CommandParams } from "../../libs//dto/cli.dto";
-import { fail } from "../../libs/util";
+import { CommandParams } from "../../libs//dto/cli.dto.js";
+import { fail } from "../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {

@@ -118,7 +118,7 @@ export const formatHelpAsMarkdown = (
   const commandDescription = helper.commandDescription(cmd);
   let description = "";
   if (commandDescription.length > 0) {
-    description = helper.wrap(commandDescription, helpWidth, 0);
+    description = helper.boxWrap(commandDescription, helpWidth);
   }
 
   // Usage
@@ -126,7 +126,7 @@ export const formatHelpAsMarkdown = (
 
   const anchor = opts.anchor ? `<a name="${opts.anchor}"></a>` : "";
 
-  let intro: string = "";
+  let intro: string;
   if (description) {
     intro = [
       "\n",

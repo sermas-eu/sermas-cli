@@ -1,10 +1,10 @@
-import logger from "../../libs/logger";
-import { fileExists, loadFile } from "../util";
+import logger from "../../libs/logger.js";
+import { fileExists, loadFile } from "../util.js";
 
 import { RepositoryAssetTypes, RepositoryConfigDto } from "@sermas/api-client";
 import { glob } from "glob";
 import * as path from "path";
-import { DataFileExtensions, loadDataFile } from "./util";
+import { DataFileExtensions, loadDataFile } from "./util.js";
 
 export type RepositoryFiles = Record<
   RepositoryAssetTypes,

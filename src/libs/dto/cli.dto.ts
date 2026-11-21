@@ -1,15 +1,17 @@
 import { LoginResponseDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { Answers, Question } from "inquirer";
-import { CliApi } from "../api/api.cli";
+import { CliApi } from "../api/api.cli.js";
 
 export type CliInstanceCredentialsCollection = Record<
   string,
   CliCredentialsCollection
 >;
 
-export interface CliCredentialsCollection
-  extends Record<string, LoginResponseDto> {
+export interface CliCredentialsCollection extends Record<
+  string,
+  LoginResponseDto
+> {
   user?: LoginResponseDto;
 }
 
@@ -40,9 +42,7 @@ export interface CliConfig extends Record<string, any> {
 }
 
 export type PromptQuestionChoice =
-  | string[]
-  | number[]
-  | { name: string; value: any; short?: string }[];
+  string[] | number[] | { name: string; value: any; short?: string }[];
 export interface PromptQuestion extends Question {
   name: string;
   message: string;

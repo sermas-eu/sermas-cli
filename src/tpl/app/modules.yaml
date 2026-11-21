@@ -2,7 +2,7 @@
 # Define modules
 # Each module will have a client to access resources
 - moduleId: avatar
-  # secret will be used as client secret. 
+  # secret will be used as client secret.
   # Leave empty to generate on.
   secret: null
   # Supported modules

@@ -1,16 +1,16 @@
 import { ButtonsUIContentDto, sleep } from "@sermas/api-client";
-import { AppApi } from "../api/api.app";
-import { CliApi } from "../api/api.cli";
+import { AppApi } from "../api/api.app.js";
+import { CliApi } from "../api/api.cli.js";
 import {
   ChatHandler,
   ChatMessage,
   MessageSourceUIContent,
-} from "../chat/chat-handler";
-import { colorize } from "../colors";
-import logger from "../logger";
-import { ChatBatchOptions } from "./chat.runner.dto";
-import { ChatBatch, ChatBatchMessage } from "./loader.dto";
-import { ChatBatchRunnerResult } from "./runner.dto";
+} from "../chat/chat-handler.js";
+import { colorize } from "../colors.js";
+import logger from "../logger.js";
+import { ChatBatchOptions } from "./chat.runner.dto.js";
+import { ChatBatch, ChatBatchMessage } from "./loader.dto.js";
+import { ChatBatchRunnerResult } from "./runner.dto.js";
 
 export class ChatBatchRunner {
   private chatHandler: ChatHandler;
@@ -101,23 +101,22 @@ export class ChatBatchRunner {
     }
 
     const selections = buttons
-      .map(
-        (b) =>
-          b.content?.list
-            .map((b, i) => {
-              // match button by index, id, label or value
-              const matches =
-                i === +chatMessage.select ||
-                b.id === chatMessage.select ||
-                chatMessage.select === b.label ||
-                chatMessage.select === b.value;
-              return matches ? b.label || b.value : null;
-            })
-            // return only the label selected or undefined
-            .reduce(
-              (selection: string | undefined, value) => value || selection,
-              undefined,
-            ),
+      .map((b) =>
+        b.content?.list
+          .map((b, i) => {
+            // match button by index, id, label or value
+            const matches =
+              i === +chatMessage.select ||
+              b.id === chatMessage.select ||
+              chatMessage.select === b.label ||
+              chatMessage.select === b.value;
+            return matches ? b.label || b.value : null;
+          })
+          // return only the label selected or undefined
+          .reduce(
+            (selection: string | undefined, value) => value || selection,
+            undefined,
+          ),
       )
       .filter((response) => response !== undefined);
 
@@ -228,7 +227,7 @@ ${chatMessage.evaluation}`,
     logger.verbose(`------------------------------------------`);
     logger.info(`Running batch '${this.chatBatch.name}'`);
 
-    let messages: ChatMessage[] = [];
+    let messages: ChatMessage[];
 
     const initialWait = this.chatBatch.wait || 4;
     if (initialWait) {

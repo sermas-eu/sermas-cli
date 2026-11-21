@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { CliProgram } from "./cli";
-import logger from "./libs/logger";
+import { CliProgram } from "./cli.js";
+import logger from "./libs/logger.js";
 
 const cliProgram = new CliProgram();
 const logStack = (e) => logger.error(e.stack);

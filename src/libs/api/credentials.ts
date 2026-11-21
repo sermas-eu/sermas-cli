@@ -1,6 +1,6 @@
 import { LoginResponseDto } from "@sermas/api-client";
-import { CliInstanceCredentialsCollection } from "../dto/cli.dto";
-import { CliConfigHandler } from "./config";
+import { CliInstanceCredentialsCollection } from "../dto/cli.dto.js";
+import { CliConfigHandler } from "./config.js";
 
 export class CliCredentialsHandler {
   private credentials: CliInstanceCredentialsCollection = {};

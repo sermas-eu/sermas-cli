@@ -2,7 +2,6 @@ import {
   ButtonDto,
   DialogueMessageDto,
   DialogueSessionRequestDto,
-  DialogueSessionRequestStatus,
   QuizContentDto,
   SermasApiClient,
   SessionChangedDto,
@@ -10,10 +9,10 @@ import {
   UIContentDto,
 } from "@sermas/api-client";
 import { ulid } from "ulid";
-import { AppApi } from "../api/api.app";
-import { CliApi } from "../api/api.cli";
-import logger from "../logger";
-import { fail, uuid } from "../util";
+import { AppApi } from "../api/api.app.js";
+import { CliApi } from "../api/api.cli.js";
+import logger from "../logger.js";
+import { fail, uuid } from "../util.js";
 
 export const languages = ["es-ES", "pt-PT", "it-IT", "de-DE", "en-GB", "fr-FR"];
 export const defaultLanguage = "en-GB";
@@ -47,7 +46,7 @@ export type ChatHandlerArgs = {
 
 type QueueItem = {
   requestId: string;
-  status?: DialogueSessionRequestStatus;
+  status?: DialogueSessionRequestDto["status"];
   completed: boolean;
   messages: ChatMessage[];
 };
@@ -187,12 +186,13 @@ export class ChatHandler {
               .map((b: ButtonDto) => `- ${b.label}`)
               .join("\n");
           break;
-        case "quiz":
+        case "quiz": {
           const quiz = ev.content as QuizContentDto;
           message.text = `${quiz.question}\n${quiz.answers
             .map((a) => `- ${a.answer}`)
             .join("\n")}`;
           break;
+        }
         // case "clear-screen":
         //   return;
         default:
@@ -252,70 +252,67 @@ export class ChatHandler {
 
     const waitTimesMax = 20;
 
-    return new Promise<ChatMessage[]>(async (resolve) => {
-      let sameMessage = 0;
-      let waitTimes = 0;
-      while (this.isWaiting) {
-        await sleep(waitFor);
+    let sameMessage = 0;
+    let waitTimes = 0;
+    while (this.isWaiting) {
+      await sleep(waitFor);
 
-        const queue = Object.values(this.queue)
-          .filter((q) => q.completed)
-          .reduce((list, q) => [...list, ...q.messages], [])
-          .flat()
-          .filter((m) => m !== undefined)
-          .filter((m) => m.actor === "agent")
-          .sort((a, b) => (new Date(a.ts) > new Date(b.ts) ? 1 : -1));
+      const queue = Object.values(this.queue)
+        .filter((q) => q.completed)
+        .reduce((list, q) => [...list, ...q.messages], [])
+        .flat()
+        .filter((m) => m !== undefined)
+        .filter((m) => m.actor === "agent")
+        .sort((a, b) => (new Date(a.ts) > new Date(b.ts) ? 1 : -1));
 
-        const breakWaitTimes = () => {
-          waitTimes++;
-          if (waitTimes >= waitTimesMax) {
-            return true;
-          }
-          return false;
-        };
-
-        if (!queue.length) {
-          if (breakWaitTimes()) {
-            break;
-          }
-          continue;
+      const breakWaitTimes = () => {
+        waitTimes++;
+        if (waitTimes >= waitTimesMax) {
+          return true;
         }
+        return false;
+      };
 
-        // console.log("queue", queue);
-        const lastMessages = queue.slice(-1);
-        const lastMessage = lastMessages[0];
-        if (!lastMessage) {
-          if (breakWaitTimes()) {
-            break;
-          }
-          continue;
+      if (!queue.length) {
+        if (breakWaitTimes()) {
+          break;
         }
-
-        const ts = new Date(lastMessage.ts);
-        if (
-          (this.lastMessageReceived &&
-            this.lastMessageReceived.getTime() === ts.getTime()) ||
-          lastMessage.completed
-        ) {
-          sameMessage++;
-          if (sameMessage >= sameMessageMax) {
-            break;
-          }
-        } else {
-          this.lastMessageReceived = ts;
-        }
-
-        logger.debug(
-          `Waiting for response (${sameMessage + 1} / ${sameMessageMax}) ..`,
-        );
+        continue;
       }
 
-      logger.debug(`Response received`);
-      this.isWaiting = false;
+      // console.log("queue", queue);
+      const lastMessages = queue.slice(-1);
+      const lastMessage = lastMessages[0];
+      if (!lastMessage) {
+        if (breakWaitTimes()) {
+          break;
+        }
+        continue;
+      }
 
-      const messages = this.process();
-      resolve(messages);
-    });
+      const ts = new Date(lastMessage.ts);
+      if (
+        (this.lastMessageReceived &&
+          this.lastMessageReceived.getTime() === ts.getTime()) ||
+        lastMessage.completed
+      ) {
+        sameMessage++;
+        if (sameMessage >= sameMessageMax) {
+          break;
+        }
+      } else {
+        this.lastMessageReceived = ts;
+      }
+
+      logger.debug(
+        `Waiting for response (${sameMessage + 1} / ${sameMessageMax}) ..`,
+      );
+    }
+
+    logger.debug(`Response received`);
+    this.isWaiting = false;
+
+    return this.process();
   }
 
   async sendChat(text: string, language?: string) {
@@ -374,7 +371,7 @@ export class ChatHandler {
 
     if (hasNewMessages) {
       messages = this.getMessages();
-      this.onMessage && this.onMessage(messages);
+      this.onMessage?.(messages);
       return messages;
     }
 

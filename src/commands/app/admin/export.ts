@@ -1,9 +1,9 @@
 import { Command } from "commander";
 
-import { CommandParams } from "../../../libs/dto/cli.dto";
-import logger from "../../../libs/logger";
+import { CommandParams } from "../../../libs/dto/cli.dto.js";
+import logger from "../../../libs/logger.js";
 import { PlatformAppExportFilterDto } from "@sermas/api-client";
-import { fail, saveFile } from "../../../libs/util";
+import { fail, saveFile } from "../../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {
@@ -13,7 +13,7 @@ export default {
         "Filter applications with name matching the provided filter",
       )
       .option(
-        "-id, --filter-id [filterName]",
+        "-i, --filter-id [filterName]",
         "Filter applications with id matching the provided filter",
       )
       .argument(

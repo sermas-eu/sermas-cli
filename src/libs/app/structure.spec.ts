@@ -8,7 +8,10 @@ describe("app structure", () => {
     const structure = await loadAppStructure(template);
     expect(structure.app?.name).toBe("Hello World");
     expect(structure.modules?.map((m) => m.moduleId)).toContain("avatar");
-    expect(structure.repository?.avatars?.length).toBeGreaterThan(0);
+    // platform defaults: no avatar of its own, no pinned LLM models
+    expect(structure.repository?.avatars ?? []).toHaveLength(0);
+    expect(structure.settings?.llm).toBeUndefined();
+    expect(structure.repository?.documents?.length).toBeGreaterThan(0);
   });
 
   it("turns a structure into an app", async () => {

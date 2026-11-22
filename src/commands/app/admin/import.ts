@@ -2,10 +2,10 @@ import { PlatformAppDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { glob } from "glob";
 import * as path from "path";
-import { saveAppFromDirectory } from "../../../libs/app/save";
-import { CommandParams } from "../../../libs/dto/cli.dto";
-import logger from "../../../libs/logger";
-import { fail } from "../../../libs/util";
+import { saveAppFromDirectory } from "../../../libs/app/save.js";
+import { CommandParams } from "../../../libs/dto/cli.dto.js";
+import logger from "../../../libs/logger.js";
+import { fail } from "../../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {
@@ -26,10 +26,6 @@ export default {
         "<dirpath>",
         "The repository containing applications structures to import",
       )
-      .option(
-        "-iw, --import-websites",
-        "Import RAG scraping the website list in the app configuration",
-      )
       .description("import applications");
   },
 
@@ -44,7 +40,7 @@ export default {
     const importDirPath = currentPwd
       ? path.resolve(currentPwd, userpath)
       : userpath;
-    const { skipClients, skipUpload, filter, importWebsites } = flags;
+    const { skipClients, skipUpload, filter } = flags;
 
     logger.info(`Searching apps in ${importDirPath}`);
 
@@ -74,12 +70,11 @@ export default {
             filepath: appPath,
             jwt,
             saveApp: async (app: PlatformAppDto) => {
-              await api.importApps([app], false);
+              await api.importApps([app], skipClients === true);
               return app;
             },
             options: {
               skipUpload,
-              importWebsites,
             },
           }),
         );

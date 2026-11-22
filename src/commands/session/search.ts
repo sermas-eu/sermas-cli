@@ -2,10 +2,10 @@ import { SessionDto } from "@sermas/api-client";
 import { Command } from "commander";
 import { mkdir } from "fs/promises";
 import * as path from "path";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import { formatHistory } from "../../libs/history";
-import logger from "../../libs/logger";
-import { fail, fileExists, saveFile } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import { formatHistory } from "../../libs/history.js";
+import logger from "../../libs/logger.js";
+import { fail, fileExists, saveFile } from "../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {
@@ -30,7 +30,7 @@ export default {
         "simple",
       )
       .option(
-        "-s, --skip-empty",
+        "-e, --skip-empty",
         "skip empty session, where the user has not interacted. default true",
         true,
       )
@@ -67,7 +67,7 @@ export default {
       query.to = toDate;
     }
 
-    let list: SessionDto[] = [];
+    let list: SessionDto[];
 
     try {
       logger.debug(`Query ${JSON.stringify(query)} limit=${limit}`);

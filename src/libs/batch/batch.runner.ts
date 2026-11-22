@@ -1,13 +1,13 @@
 import fs from "fs/promises";
 import { ulid } from "ulid";
-import { CliApi } from "../api/api.cli";
-import logger from "../logger";
-import { fileExists, toYAML, writeFile } from "../util";
-import { BatchRunnerOptions } from "./batch.runner.dto";
-import { ChatBatchRunner } from "./chat.runner";
-import { loadChatBatch } from "./loader";
-import { ChatBatch } from "./loader.dto";
-import { ChatBatchRunnerResult } from "./runner.dto";
+import { CliApi } from "../api/api.cli.js";
+import logger from "../logger.js";
+import { fileExists, toYAML, writeFile } from "../util.js";
+import { BatchRunnerOptions } from "./batch.runner.dto.js";
+import { ChatBatchRunner } from "./chat.runner.js";
+import { loadChatBatch } from "./loader.js";
+import { ChatBatch } from "./loader.dto.js";
+import { ChatBatchRunnerResult } from "./runner.dto.js";
 
 export type BatchRunnerStats = {
   id: string;
@@ -147,7 +147,9 @@ export class BatchRunner {
         items.map(async (item) => {
           try {
             await item();
-          } catch {}
+          } catch {
+            // an item reports its own failure
+          }
         }),
       );
     }

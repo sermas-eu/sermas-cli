@@ -11,11 +11,16 @@ prompt:
 # language, e.g. it-IT, de-DE, es-Es
 language: en-GB
 
-# LLM provider
-llm:
-  chat: openai/gpt-4o-mini
-  tools: openai/gpt-4o-mini
-  sentiment: openai/gpt-4o-mini
-  tasks: openai/gpt-4o-mini
-  intent: openai/gpt-4o-mini
-  translation: openai/gpt-4o-mini
+# LLM models: the platform defaults unless set here. A name is `openai/<model>`,
+# where <model> is one the platform's OpenAI-compatible endpoint serves.
+# llm:
+#   chat: openai/<model>
+#   tools: openai/<model>
+#   sentiment: openai/<model>
+#   tasks: openai/<model>
+#   intent: openai/<model>
+#   translation: openai/<model>
+
+# Avatar: the platform default unless the app has one. To add one, put a file in
+# repository/avatars/<name>.yaml with `path` (a GLB in that folder, or a URL),
+# `gender`, `name` and `prompt`, and set `avatar: <name>` here.

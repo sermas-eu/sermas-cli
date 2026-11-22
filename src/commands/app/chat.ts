@@ -4,10 +4,10 @@ import {
   ChatMessage,
   defaultLanguage,
   languages,
-} from "../../libs/chat/chat-handler";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-import { fail, waitInterrupt } from "../../libs/util";
+} from "../../libs/chat/chat-handler.js";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import logger from "../../libs/logger.js";
+import { fail, waitInterrupt } from "../../libs/util.js";
 import { sleep } from "@sermas/api-client";
 
 export default {

@@ -1,5 +1,5 @@
-import logger from "../../libs/logger";
-import { fileExists, loadYAML, saveFile } from "../util";
+import logger from "../../libs/logger.js";
+import { fileExists, loadYAML, saveFile } from "../util.js";
 
 import {
   AppModuleConfigDto,
@@ -8,13 +8,12 @@ import {
   AppUserDto,
   DialogueTaskDto,
   PlatformAppDto,
-  RagDocumentsDto,
   RepositoryConfigDto,
 } from "@sermas/api-client";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { RepositoryFiles, scanRepository } from "./repository";
-import { loadDataFile } from "./util";
+import { RepositoryFiles, scanRepository } from "./repository.js";
+import { loadDataFile } from "./util.js";
 
 export type AppStructure = {
   appId?: string;
@@ -26,13 +25,9 @@ export type AppStructure = {
   users?: AppUserDto[];
   repository?: RepositoryConfigDto;
   files?: RepositoryFiles;
-  rag?: RagDocumentsDto;
 };
 
-export const structureToApp = (
-  appStructure: AppStructure,
-  importWebsites?: boolean,
-): PlatformAppDto => {
+export const structureToApp = (appStructure: AppStructure): PlatformAppDto => {
   const app: PlatformAppDto = (
     appStructure?.app ? { ...appStructure.app } : {}
   ) as PlatformAppDto;
@@ -78,10 +73,6 @@ export const structureToApp = (
 
   app.repository = appStructure.repository || undefined;
 
-  if (!importWebsites) {
-    delete app.rag;
-  }
-
   return app;
 };
 
@@ -125,11 +116,6 @@ export const loadAppStructure = async (basepath: string) => {
     appStructure.users = users;
   }
 
-  const rag = await loadDataFile<RagDocumentsDto>(`${basepath}/rag`);
-  if (rag) {
-    appStructure.rag = rag;
-  }
-
   const { repository, files } = await scanRepository(basepath);
   appStructure.repository = repository;
   appStructure.files = files;
@@ -152,7 +138,7 @@ export const copyTemplate = async (filepath: string, force = false) => {
   }
 
   try {
-    await fs.cp(path.resolve(__dirname, "../../tpl/app"), fullpath, {
+    await fs.cp(path.resolve(import.meta.dirname, "../../tpl/app"), fullpath, {
       recursive: true,
     });
   } catch (e: any) {

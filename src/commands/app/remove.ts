@@ -1,17 +1,17 @@
 import { Command } from "commander";
-import logger from "../../libs/logger";
-import { fail, quit } from "../../libs/util";
-import { CommandParams } from "../../libs/dto/cli.dto";
+import logger from "../../libs/logger.js";
+import { confirmed, fail, quit } from "../../libs/util.js";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
 
 export default {
   setup: async (command: Command) => {
     command
       .description("Delete an application")
-      .option("--public", "Save credentials locally")
+      .option("--yes", "Remove without asking for confirmation")
       .argument("[appId]", "Application ID");
   },
 
-  run: async ({ args, feature, api }: CommandParams) => {
+  run: async ({ args, flags, feature, api }: CommandParams) => {
     let [appId] = args;
 
     const apps = await api.listUserApps();
@@ -45,17 +45,11 @@ export default {
     if (!apps.filter((app) => app.appId === appId).length)
       return fail(`Application not found for appId=${appId}`);
 
-    const answers = await feature.prompt([
-      {
-        name: "confirm",
-        message: "Are you sure?",
-        type: "confirm",
-      },
-    ]);
+    if (!(await confirmed(flags, feature))) return fail(`App removal aborted.`);
 
-    if (!answers.confirm) return fail(`App removal aborted.`);
-
-    await api.removeApp(appId);
+    // null: the request failed (requestWrapper logged why)
+    if ((await api.removeApp(appId)) === null)
+      return fail(`Failed to remove appId=${appId}`);
 
     logger.info(`Application removed appId=${appId}`);
     return appId;

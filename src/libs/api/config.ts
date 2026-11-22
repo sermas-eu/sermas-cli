@@ -1,6 +1,6 @@
-import { CliConfig, CliInstanceConfig } from "../dto/cli.dto";
-import logger from "../logger";
-import { loadFile, saveFile } from "../util";
+import { CliConfig, CliInstanceConfig } from "../dto/cli.dto.js";
+import logger from "../logger.js";
+import { loadFile, saveFile } from "../util.js";
 
 export class CliConfigHandler {
   private config: CliInstanceConfig = {};
@@ -9,15 +9,15 @@ export class CliConfigHandler {
 
   async loadConfig(domain: string, forceReload = false) {
     if (this.config[domain] && !forceReload) return this.config[domain];
-    let res: CliConfig;
+    let res: CliInstanceConfig | undefined;
     try {
       res = await loadFile<CliInstanceConfig>(this.cliConfigFile);
       logger.verbose(`Loaded CLI config from ${this.cliConfigFile}`);
     } catch {
-    } finally {
-      this.config = res || {};
-      return this.config[domain] || {};
+      // no config yet: start empty
     }
+    this.config = res || {};
+    return this.config[domain] || {};
   }
 
   async saveConfig(domain: string, res: Partial<CliConfig>) {

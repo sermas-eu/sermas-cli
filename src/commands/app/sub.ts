@@ -1,8 +1,8 @@
 import { MqttClient } from "@sermas/api-client";
 import { Command } from "commander";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-import { fail, toJSON, waitInterrupt } from "../../libs/util";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import logger from "../../libs/logger.js";
+import { fail, toJSON, waitInterrupt } from "../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {
@@ -85,6 +85,7 @@ export default {
             const json = JSON.parse(message.toString());
             data = toJSON(json);
           } catch {
+            // not JSON: logged as received
           } finally {
             logger.info(`${topic}: ${data} [${properties}]`);
           }

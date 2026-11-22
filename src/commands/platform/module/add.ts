@@ -1,9 +1,9 @@
 import axios, { AxiosResponse } from "axios";
 import { Command } from "commander";
-import { CommandParams } from "../../../libs/dto/cli.dto";
-import logger from "../../../libs/logger";
+import { CommandParams } from "../../../libs/dto/cli.dto.js";
+import logger from "../../../libs/logger.js";
 import { PlatformModuleConfigDto } from "@sermas/api-client";
-import { fail, toJSON } from "../../../libs/util";
+import { fail, toJSON } from "../../../libs/util.js";
 
 export default {
   setup: async (command: Command) => {

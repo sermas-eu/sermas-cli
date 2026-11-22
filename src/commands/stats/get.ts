@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import * as d3 from "d3";
-import { CommandParams } from "../../libs/dto/cli.dto";
-import logger from "../../libs/logger";
-import { fail, writeFile } from "../../libs/util";
+import * as d3 from "d3-array";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
+import logger from "../../libs/logger.js";
+import { fail, writeFile } from "../../libs/util.js";
 
 const parseDateTime = (
   dateTime: string,

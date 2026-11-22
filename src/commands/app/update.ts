@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import logger from "../../libs/logger";
+import logger from "../../libs/logger.js";
 import { PlatformAppDto } from "@sermas/api-client";
-import { fail, loadFile } from "../../libs/util";
-import { CommandParams } from "../../libs/dto/cli.dto";
+import { fail, loadFile } from "../../libs/util.js";
+import { CommandParams } from "../../libs/dto/cli.dto.js";
 
 export default {
   setup: async (command: Command) => {

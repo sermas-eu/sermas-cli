@@ -23,7 +23,9 @@ export interface KeycloakJwtTokenRealmAccess {
   roles: string[];
 }
 
-export interface KeycloakJwtTokenResourceAccess
-  extends Record<string, KeycloakJwtTokenRealmAccess> {
+export interface KeycloakJwtTokenResourceAccess extends Record<
+  string,
+  KeycloakJwtTokenRealmAccess
+> {
   account: KeycloakJwtTokenRealmAccess;
 }

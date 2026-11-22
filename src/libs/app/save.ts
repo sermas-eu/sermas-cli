@@ -6,15 +6,14 @@ import {
 import * as fs from "fs/promises";
 import { lookup } from "mime-types";
 import * as path from "path";
-import { CliApi } from "../../libs/api/api.cli";
-import { KeycloakJwtTokenDto } from "../../libs/dto/keycloak.dto";
-import logger from "../../libs/logger";
-import { readFile } from "../../libs/util";
-import { loadAppStructure, saveAppId, structureToApp } from "./structure";
+import { CliApi } from "../../libs/api/api.cli.js";
+import { KeycloakJwtTokenDto } from "../../libs/dto/keycloak.dto.js";
+import logger from "../../libs/logger.js";
+import { readFile } from "../../libs/util.js";
+import { loadAppStructure, saveAppId, structureToApp } from "./structure.js";
 
 export type SaveAppFromDirOptions = {
   skipUpload?: boolean;
-  importWebsites?: boolean;
 };
 
 type SaveAppFromDirParams = {
@@ -30,7 +29,7 @@ export const saveAppFromDirectory = async (data: SaveAppFromDirParams) => {
   const options = data.options || {};
 
   const appStructure = await loadAppStructure(filepath);
-  const app = structureToApp(appStructure, options.importWebsites);
+  const app = structureToApp(appStructure);
 
   app.ownerId = app.ownerId || jwt.sub;
 
@@ -75,7 +74,7 @@ export const saveAppFromDirectory = async (data: SaveAppFromDirParams) => {
   try {
     await saveAppId(filepath, appId);
   } catch (e) {
-    throw new Error(`Failed to save appId: ${e.message}`);
+    throw new Error(`Failed to save appId: ${e.message}`, { cause: e });
   }
 
   logger.info(`Application ${app.name} saved with id=${appId}`);
@@ -103,7 +102,7 @@ export const saveAppFromDirectory = async (data: SaveAppFromDirParams) => {
         await api.saveAsset(
           payload,
           new Blob([await readFile(filename)], {
-            type: lookup(filename),
+            type: lookup(filename) || "application/octet-stream",
           }),
         );
       }

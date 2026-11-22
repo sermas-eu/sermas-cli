@@ -1,8 +1,10 @@
 
 IMAGE=ghcr.io/sermas-eu/cli:dev
 
+API_CLIENT_DIR?=../sermas-api-client
+
 docker/build:
-	docker build . -t ${IMAGE}
+	docker build --build-context api-client=${API_CLIENT_DIR} . -t ${IMAGE}
 
 docker/bash:
 	docker run --rm -it --entrypoint bash ${IMAGE}

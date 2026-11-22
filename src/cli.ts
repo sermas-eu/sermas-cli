@@ -3,32 +3,33 @@ import * as fs from "fs/promises";
 import { glob } from "glob";
 import inquirer, { Answers } from "inquirer";
 import { homedir } from "os";
-import * as path from "path";
-import { CliApi } from "./libs/api/api.cli";
-import { CliConfigHandler } from "./libs/api/config";
-import { CliCredentialsHandler } from "./libs/api/credentials";
-import { generateDocs } from "./libs/docs";
+import * as path from "node:path";
+import { pathToFileURL } from "node:url";
+import { CliApi } from "./libs/api/api.cli.js";
+import { CliConfigHandler } from "./libs/api/config.js";
+import { CliCredentialsHandler } from "./libs/api/credentials.js";
+import { generateDocs } from "./libs/docs.js";
 import {
   CliCommand,
   CliCommandLeaf,
   CliCommandTree,
   CommandParams,
   PromptQuestion,
-} from "./libs/dto/cli.dto";
-import logger from "./libs/logger";
-import { FileFormatType, toData, toJSON } from "./libs/util";
+} from "./libs/dto/cli.dto.js";
+import logger from "./libs/logger.js";
+import { FileFormatType, toData, toJSON } from "./libs/util.js";
 
-import LoginCmd from "./commands/auth/login";
+import LoginCmd from "./commands/auth/login.js";
 
 const baseUrl = process.env.BASE_URL || "http://localhost:8080";
 const configDir = process.env.CONFIG_DIR || path.resolve(homedir(), ".sermas");
 
 const credentialsFile = path.resolve(configDir, `credentials.json`);
 const cliConfigFile = path.resolve(configDir, `cli.json`);
-const packageJson = path.resolve(__dirname, "../package.json");
+const packageJson = path.resolve(import.meta.dirname, "../package.json");
 
 export class CliProgram {
-  private readonly fileExt = path.extname(__filename);
+  private readonly fileExt = path.extname(import.meta.filename);
 
   private readonly config = new CliConfigHandler(cliConfigFile);
   private readonly credentials = new CliCredentialsHandler(
@@ -103,16 +104,19 @@ export class CliProgram {
       .on("option:json", () => this.silenceLogger());
 
     const commandsPaths = [
-      path.resolve(__dirname, "./commands/"),
+      path.resolve(import.meta.dirname, "./commands/"),
       ...extraCommandFolders,
     ];
 
     const tree: CliCommandLeaf = {};
 
     for (const commandsBasePath of commandsPaths) {
-      const commandsPathsList = await glob(
-        commandsBasePath + "/**/*" + this.fileExt,
-      );
+      // tests may sit beside their commands; they are not commands. Filtered here:
+      // a glob `ignore` matches relative to the cwd and misses the files when the
+      // CLI runs from another directory
+      const commandsPathsList = (
+        await glob(commandsBasePath + "/**/*" + this.fileExt)
+      ).filter((p) => !/\.spec\.[cm]?[jt]s$/.test(p));
       const commandsList = commandsPathsList
         .map((p) => p.replace(commandsBasePath + "/", ""))
         .map((p) => p.split("/"));
@@ -194,7 +198,9 @@ export class CliProgram {
 
   async importModule(modulePath: string, failSilently = false) {
     try {
-      return (await import(modulePath)).default as CliCommand;
+      // ESM imports take URLs; an absolute path works on POSIX only
+      return (await import(pathToFileURL(modulePath).href))
+        .default as CliCommand;
     } catch (e) {
       if (!failSilently)
         logger.error(`Failed to import ${modulePath}: ${e.stack}`);

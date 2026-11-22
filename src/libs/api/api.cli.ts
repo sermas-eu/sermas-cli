@@ -1,9 +1,9 @@
 import { Logger, LoginResponseDto } from "@sermas/api-client";
-import { CliConfig } from "../dto/cli.dto";
-import { AppApi } from "./api.app";
-import { BaseApi } from "./api.base";
-import { CliConfigHandler } from "./config";
-import { CliCredentialsHandler } from "./credentials";
+import { CliConfig } from "../dto/cli.dto.js";
+import { AppApi } from "./api.app.js";
+import { BaseApi } from "./api.base.js";
+import { CliConfigHandler } from "./config.js";
+import { CliCredentialsHandler } from "./credentials.js";
 
 export class CliApi extends BaseApi {
   protected readonly logger = new Logger(CliApi.name);

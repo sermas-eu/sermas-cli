@@ -3,6 +3,7 @@ import YAML from "js-yaml";
 import * as path from "path";
 import { randomUUID as uuidv4 } from "node:crypto";
 import logger from "./logger.js";
+import type { CliFeature, CommandParams } from "./dto/cli.dto.js";
 
 export const uuid = () => uuidv4();
 
@@ -31,6 +32,21 @@ export const quit = (message?: string, code?: number) => {
 };
 
 export const fail = (message?: string) => quit(message, 1);
+
+/**
+ * Asks "Are you sure?" unless `--yes` was given. Without a terminal to ask (JSON/YAML
+ * output disables prompts) the answer is no: destructive commands need `--yes` there.
+ */
+export const confirmed = async (
+  flags: CommandParams["flags"],
+  feature: CliFeature,
+): Promise<boolean> => {
+  if (flags.yes) return true;
+  const answers = await feature.prompt([
+    { name: "confirm", message: "Are you sure?", type: "confirm" },
+  ]);
+  return answers.confirm === true;
+};
 
 export const readFile = async (filepath: string) => {
   if (!filepath) return null;

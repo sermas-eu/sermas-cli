@@ -111,8 +111,10 @@ export class CliProgram {
     const tree: CliCommandLeaf = {};
 
     for (const commandsBasePath of commandsPaths) {
+      // tests may sit beside their commands; they are not commands
       const commandsPathsList = await glob(
         commandsBasePath + "/**/*" + this.fileExt,
+        { ignore: "**/*.spec.*" },
       );
       const commandsList = commandsPathsList
         .map((p) => p.replace(commandsBasePath + "/", ""))

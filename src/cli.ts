@@ -111,11 +111,12 @@ export class CliProgram {
     const tree: CliCommandLeaf = {};
 
     for (const commandsBasePath of commandsPaths) {
-      // tests may sit beside their commands; they are not commands
-      const commandsPathsList = await glob(
-        commandsBasePath + "/**/*" + this.fileExt,
-        { ignore: "**/*.spec.*" },
-      );
+      // tests may sit beside their commands; they are not commands. Filtered here:
+      // a glob `ignore` matches relative to the cwd and misses the files when the
+      // CLI runs from another directory
+      const commandsPathsList = (
+        await glob(commandsBasePath + "/**/*" + this.fileExt)
+      ).filter((p) => !/\.spec\.[cm]?[jt]s$/.test(p));
       const commandsList = commandsPathsList
         .map((p) => p.replace(commandsBasePath + "/", ""))
         .map((p) => p.split("/"));
